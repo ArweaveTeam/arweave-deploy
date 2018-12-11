@@ -1,0 +1,40 @@
+{
+  "name": "arweave-deploy",
+  "version": "1.0.0",
+  "description": "arweave-deploy",
+  "main": "dist/arweave-deploy",
+  "devDependencies": {
+    "@types/mime": "^2.0.0",
+    "@types/node": "^10.12.12",
+    "@types/promptly": "^1.1.28",
+    "arweave-js": "github:ArweaveTeam/arweave-js",
+    "commander": "^2.19.0",
+    "mime": "^2.4.0",
+    "pkg": "^4.3.5",
+    "promptly": "^3.0.3",
+    "ts-loader": "^5.3.0",
+    "typescript": "^3.1.6",
+    "webpack": "^4.25.1",
+    "webpack-bundle-analyzer": "^3.0.3",
+    "webpack-cli": "^3.1.2"
+  },
+  "scripts": {
+    "build": "npx webpack && chmod +x dist/arweave-deploy"
+  },
+  "bin": {
+    "arweave-deploy": "dist/arweave-deploy"
+  },
+  "targets": {
+    "node": "8.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArweaveTeam/arweave-deploy.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ArweaveTeam/arweave-deploy/issues"
+  },
+  "homepage": "https://github.com/ArweaveTeam/arweave-deploy#readme"
+}
