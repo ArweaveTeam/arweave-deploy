@@ -19,7 +19,8 @@
     "webpack-cli": "^3.1.2"
   },
   "scripts": {
-    "build": "npx webpack && chmod +x dist/arweave-deploy"
+    "build": "npx webpack && chmod +x dist/arweave-deploy",
+    "package": "npx webpack && chmod +x dist/arweave-deploy && npx pkg dist/arweave-deploy --targets node10-linux-x64,node10-macos-x64,node10-win-x64 --out-path dist/bin"
   },
   "bin": {
     "arweave-deploy": "dist/arweave-deploy"

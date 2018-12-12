@@ -60,7 +60,7 @@ export class File {
             const s = Math.pow(1024, id);
             let fixed = '';
             if (bytes >= s) {
-                fixed = String((bytes / s).toFixed());
+                fixed = String((bytes / s).toFixed(2));
                 if (fixed.indexOf('.0') === fixed.length - 2) {
                     fixed = fixed.slice(0, -2);
                 }
