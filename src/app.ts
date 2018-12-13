@@ -142,75 +142,29 @@ program
     })
 
 program
-    .command('test <file_path>')
-    .description('Test the deployment without committing anything')
-    .action(async (path) => {
+    .command('status <transaction_id>')
+    .description('Get the status of a transaction')
+    .action(async (transactionId) => {
 
-        log(`${chalk.cyanBright('Arweave Deploy')} / Test`);
+        log(`${chalk.cyanBright('Arweave Deploy')} / Transaction Status`);
         log(``);
 
-        log(chalk.yellowBright('TEST MODE - Nothing will actually be uploaded as part of this process.'));
-        log(``);
+        const status =  await arweave.transactions.getStatus(transactionId);
 
-        const file = new File(path, cwd);
+        const codes = {
+            200: 'Deployed',
+            202: 'Pending',
+            404: 'Not found'
+        };
 
-        if (!await file.exists()) {
-            throw new Error(`Failed to read file at path: "${file.getPath()}"`);
+        const expanded = (<any>codes)[status];
+
+        log(`Trasaction ID: ${transactionId}`);
+        log(`Status: ${status} ${expanded ? expanded : ''}`);
+
+        if (status == 200) {
+            log(`URL: http://arweave.net/${transactionId}`);
         }
-
-        const data = (await file.read()).toString();
-
-        const bytes = (await file.info()).size;
-
-        const key = await program.key;
-
-        if (!key) {
-            throw new Error(`Arweave key required, try running this command again with '--key path/to/key/file.json'`);
-        }
-
-        const address = key ? await arweave.wallets.jwkToAddress(key) : null;
-
-        const balance = key ? await arweave.wallets.getBalance(address) : null;
-
-        const price = await arweave.transactions.getPrice(bytes);
-
-        const balanceAfter = key ? arweave.ar.sub(balance, price): null;
-
-        // The content-type tag value can be supplied by the user
-        // this can be useful if the mime auto-detection fails for
-        // whatever reason or the user wants to set another value.
-        const type = program.contentType ? program.contentType : mime.getType(path);
-
-        const transaction = await arweave.createTransaction({
-            data: data,
-            reward: price
-        }, key);
-
-        transaction.addTag('Content-Type', type);
-
-        await arweave.transactions.sign(transaction, key);
-
-        log(chalk.green(`File: ${path}`));
-        log(`Type: ${type}`);
-        log(`Size: ${File.bytesForHumans(bytes)}`);
-        log(`Wallet address: ${address}`);
-        log(`Price: ${formatWinston(program, price)}`);
-        log(`Current balance: ${formatWinston(program, balance)}`);
-        log(`Balance after uploading: ${formatWinston(program, balanceAfter)}`);
-
-        if (!program.forceSkipWarnings && isMaybeKey(data)) {
-            let confirmed = await promptly.confirm(chalk.redBright(`The data you're uploading looks like it might be a key file, are you sure you want to continue? Y/N (default: N)`));
-            log(``);
-
-            if (!confirmed) {
-                throw new Error('Cancelled');
-            }
-        }
-
-        log(`The URL for your file would be`);
-        log(``);
-        log(chalk.cyanBright(`http://arweave.net/${transaction.id}`));
-        log(``);
 
     })
 
@@ -301,16 +255,18 @@ program
          */
 
         // @ts-ignore
-        const response = await arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
+        // const response = await arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
 
-        if (response.status != 200) {
-            throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
-        }
+        // if (response.status != 200) {
+        //     throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
+        // }
 
         log(`Your file is deploying! 🚀`);
         log(`Once your file is mined into a block it'll be available on the following URL`);
         log(``);
         log(chalk.cyanBright(`http://arweave.net/${transaction.id}`));
+        log(``);
+        log(`You can check it's status using 'arweave-deploy status ${transaction.id}'`);
         log(``);
     })
 
