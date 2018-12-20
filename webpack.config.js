@@ -29,7 +29,7 @@ module.exports = {
         })
     ],
     output: {
-        filename: 'arweave-deploy',
+        filename: 'arweave',
         path: path.resolve(__dirname, 'dist')
     }
 };

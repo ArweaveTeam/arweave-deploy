@@ -1,3 +1,11 @@
+import { JWKInterface } from "arweave-js/dist/node/arweave/lib/Wallet";
+import * as os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
+import { promisify } from 'util';
+import { File } from "./file";
+
 export function validateKeyComponents(obj: any): void {
 
     const expected = ['kty', 'n','e','d','p','q','dp','dq','qi'];
@@ -54,5 +62,168 @@ export function isMaybeKey(data: string): boolean {
         return false;
     } catch (error) {
         return false;
+    }
+}
+
+
+async function recall(): Promise<{address:string, encrypted:string}>{
+    const path = keyFilePath();
+
+    const file = new File(path);
+
+    if (!await file.exists()) {
+        return;
+    }
+
+    const data = (await file.read()).toString();
+
+    const decoded = JSON.parse(data);
+
+    return {
+        address: decoded.address,
+        encrypted: decoded.key
+    };
+}
+
+export async function recallKeyAddress(): Promise<string> {
+    const data = await recall();
+
+    if (data) {
+        return data.address;
+    }
+}
+
+export async function recallKey(passphrase: string): Promise<JWKInterface> {
+
+    if (!passphrase) {
+        throw new Error('Passphrase is empty');
+    }
+
+    const data = await recall();
+
+    const decrypted = decrypt(Buffer.from(data.encrypted, 'base64'), passphrase);
+
+    return JSON.parse(decrypted.toString());
+}
+
+export async function remember(key: JWKInterface, address: string, passphrase: string): Promise<void> {
+
+    if (!passphrase) {
+        throw new Error('Passphrase is empty');
+    }
+
+    const path = keyFilePath();
+
+    const file = new File(path);
+
+    const data = {
+        address: address,
+        key: encrypt(Buffer.from(JSON.stringify(key)), passphrase).toString('base64')
+    };
+
+    await file.write(Buffer.from(JSON.stringify(data)));
+}
+
+export async function forget(): Promise<void> {
+
+    const path = keyFilePath();
+
+    const file = new File(path);
+    
+    await file.delete();
+}
+
+
+/**
+ * Get the path for the arweave app directory, creating it if it doesn't already exist.
+ */
+function appDirectoryPath(): string {
+
+    const dir = path.resolve(os.homedir(), '.arweave-deploy');
+
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, {recursive: true});
+    }
+
+    // Will throw an exception if we can't read/write
+    fs.accessSync(dir, fs.constants.R_OK | fs.constants.W_OK);
+
+    return dir;
+}
+
+function keyFilePath(): string{
+    return path.resolve(appDirectoryPath(), 'key.json');
+}
+
+
+export function encrypt(data: Buffer, passphrase: string): Buffer {
+
+    const key = crypto.pbkdf2Sync(passphrase, 'salt', 100000, 32, 'sha256')
+
+    const algorithm = 'aes-256-cbc';
+
+    const iv = crypto.randomBytes(16);
+
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+
+    const encrypted = Buffer.concat([iv,cipher.update(data),cipher.final()])
+    
+    return encrypted;
+}
+
+
+export function decrypt(encrypted: Buffer, passphrase: string): Buffer {
+    try {
+        const algorithm = 'aes-256-cbc';
+
+        const key = crypto.pbkdf2Sync(passphrase, 'salt', 100000, 32, 'sha256')
+
+        const iv = encrypted.slice(0,16);
+
+        const data = encrypted.slice(16);
+        
+        const decipher = crypto.createDecipheriv(algorithm, key, iv);
+
+        const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
+
+        return decrypted;
+    } catch (error) {
+        throw new Error('Failed to decrypt')
+    }
+}
+
+
+export async function loadFromFile(path: string, cwd: string){
+
+    const file = new File(path, cwd);
+
+    if (!await file.exists()) {
+        throw new Error(`File at path ${path} not found`);
+    }
+
+    let data = '';
+
+    try {
+        data = (await file.read({encoding: 'utf-8'})).toString();
+    } catch (error) {
+        throw new Error(`Failed to read Arweave key file: ${error.message}`);
+    }
+
+    if(!data){
+        throw new Error(`Failed to read Arweave key file`);
+    }
+
+    try {
+        const decoded =  JSON.parse(data);
+
+        if (typeof decoded !== 'object') {
+            throw new Error('Failed to parse Arweave key file, the file format is invalid');
+        }
+    
+        validateKeyComponents(decoded);
+    
+        return decoded;
+    } catch (error) {
+        throw new Error('Failed to parse Arweave key file, the file format is invalid');
     }
 }

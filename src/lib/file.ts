@@ -1,27 +1,23 @@
 import * as fs from 'fs';
-import { resolve } from 'path';
+import * as path from 'path';
 
 export class File {
 
     protected path: string
+    protected base: string
 
 	constructor(path: string, base?: string) {
         this.path = path;
-        if (base) {
-            resolve(base, this.path);
-        }else{
-            resolve(this.path);
-        }
+        this.base = base;
     }
 
     public getPath(){
-        return this.path;
+        return this.base ? path.resolve(this.base, this.path) : this.path;
     }
 
     public read(options?: { encoding?: string; flag?: string; }): Promise<string | Buffer> {
         return new Promise((resolve, reject) => {
-
-            fs.readFile(this.path, options, (error: Error, data: string | Buffer ) => {
+            fs.readFile(this.getPath(), options, (error: Error, data: string | Buffer ) => {
                 if (error) {
                     reject(error)
                 }
@@ -30,9 +26,20 @@ export class File {
         });
     }
 
+    public write (data: Buffer, options?: object): Promise<void> {
+        return new Promise((resolve, reject) => {
+            fs.writeFile(this.getPath(), data, options, (error: Error) => {
+                if (error) {
+                    reject(error);
+                }
+                resolve();
+            })
+        });
+    }
+
     public exists(): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            fs.exists(this.path, (exists: boolean) => {
+            fs.exists(this.getPath(), (exists: boolean) => {
                 resolve(exists);
             })
         });
@@ -40,11 +47,22 @@ export class File {
 
     public info(): Promise<fs.Stats> {
         return new Promise((resolve, reject) => {
-            fs.stat(this.path, (error: Error, stats: fs.Stats) => {
+            fs.stat(this.getPath(), (error: Error, stats: fs.Stats) => {
                 if (error) {
                     reject(error)
                 }
                 resolve(stats);
+            })
+        });
+    }
+
+    public delete(): Promise<fs.Stats> {
+        return new Promise((resolve, reject) => {
+            fs.unlink(this.getPath(), (error: Error) => {
+                if (error) {
+                    reject(error)
+                }
+                resolve();
             })
         });
     }

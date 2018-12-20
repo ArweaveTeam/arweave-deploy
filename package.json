@@ -19,11 +19,11 @@
     "webpack-cli": "^3.1.2"
   },
   "scripts": {
-    "build": "npx webpack && chmod +x dist/arweave-deploy",
-    "package": "npx webpack && chmod +x dist/arweave-deploy && npx pkg dist/arweave-deploy --targets node10-linux-x64 --out-path dist/bin/linux && npx pkg dist/arweave-deploy --targets node10-macos-x64 --out-path dist/bin/macos && npx pkg dist/arweave-deploy --targets node10-win-x64 --out-path dist/bin/windows"
+    "build": "npx webpack && chmod +x dist/arweave",
+    "package": "npx webpack && chmod +x dist/arweave && npx pkg dist/arweave --targets node10-linux-x64 --out-path dist/bin/linux && npx pkg dist/arweave --targets node10-macos-x64 --out-path dist/bin/macos && npx pkg dist/arweave --targets node10-win-x64 --out-path dist/bin/windows"
   },
   "bin": {
-    "arweave-deploy": "dist/arweave-deploy"
+    "arweave": "dist/arweave"
   },
   "targets": {
     "node": "8.11"
