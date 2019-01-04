@@ -64,6 +64,13 @@ cli
         throw new Error('--content-type: Invalid content-type, must be a valid mime type in the format of */*, e.g. text/html');
     })
 
+cli
+    .option('--silo <silo_name>', 'Deploy with Silo using this name.', (value: string): string => {
+        if (value.match(/[a-zA-Z0-9]+\.[0-9]+/)) {
+            return value;
+        }
+        throw new Error('--silo: Invalid Silo name, must be a name in the format of [a-zA-Z0-9]+.[0-9]+, e.g. \'bubble.7\'');
+    })
 
 commands.forEach( instance => {
 

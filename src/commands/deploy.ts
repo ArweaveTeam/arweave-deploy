@@ -2,6 +2,7 @@ import { Command } from '../command';
 import chalk from 'chalk';
 import { File } from '../lib/file';
 import * as keys from '../lib/keys';
+import * as silo from '../lib/silo';
 import * as mime from 'mime';
 
 export class DeployCommand extends Command{
@@ -17,7 +18,7 @@ export class DeployCommand extends Command{
             throw new Error(`Failed to read file at path: "${path}"`);
         }
 
-        const data = (await file.read()).toString();
+        let data = (await file.read()).toString();
 
         const bytes = (await file.info()).size;
 
@@ -38,16 +39,24 @@ export class DeployCommand extends Command{
         // The content-type tag value can be supplied by the user
         // this can be useful if the mime auto-detection fails for
         // whatever reason or the user wants to set another value.
-        const type = this.context.contentType ? this.context.contentType : mime.getType(path);
+        const type = this.context.parent.contentType ? this.context.contentType : mime.getType(path);
 
-        const transaction = await this.arweave.createTransaction({
+        if(this.context.parent.silo) {
+            var silo_keys = silo.parseName(this.context.parent.silo);
+            data = (keys.encrypt(new Buffer(data, "binary"), silo_keys.decrypt.toString())).toString();
+        }
+
+        var transaction = await this.arweave.createTransaction({
             data: data,
             reward: price
         }, key);
 
 
-        transaction.addTag('Content-Type', type);
+        if(this.context.parent.silo) {
+            transaction.addTag("Silo-Name", silo_keys.access.toString());
+        }
 
+        transaction.addTag('Content-Type', type);
         await this.arweave.transactions.sign(transaction, key);
 
         this.log(`File: ${path}`);
@@ -91,11 +100,11 @@ export class DeployCommand extends Command{
          */
 
         // @ts-ignore
-        // const response = await arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
+        const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
 
-        // if (response.status != 200) {
-        //     throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
-        // }
+        if (response.status != 200) {
+            throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
+        }
 
         this.log(`Your file is deploying! 🚀`);
         this.log(`Once your file is mined into a block it'll be available on the following URL`);
