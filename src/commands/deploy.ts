@@ -4,7 +4,7 @@ import { File } from '../lib/file';
 import * as keys from '../lib/keys';
 import * as mime from 'mime';
 import { SiloReference } from '../lib/silo';
-import { JWKInterface } from 'arweave/dist/node/arweave/lib/Wallet';
+import { JWKInterface } from 'arweave/dist/node/arweave/lib/wallet';
 import { Transaction } from 'arweave/dist/node/arweave/lib/transaction';
 
 export class DeployCommand extends Command {

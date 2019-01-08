@@ -265,10 +265,875 @@ Object.defineProperty(module, 'exports', {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1.js":
-/*!***********************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1.js ***!
-  \***********************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/ar.js":
+/*!******************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/ar.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const bignumber_js_1 = __webpack_require__(/*! bignumber.js */ "./node_modules/bignumber.js/bignumber.mjs");
+class Ar {
+    constructor() {
+        // Configure and assign the constructor function for the bignumber library.
+        this.BigNum = (value, decimals) => {
+            let instance = bignumber_js_1.BigNumber.clone({ DECIMAL_PLACES: decimals });
+            return new instance(value);
+        };
+    }
+    winstonToAr(winstonString, { formatted = false, decimals = 12, trim = true } = {}) {
+        let number = this.stringToBigNum(winstonString, decimals).shiftedBy(-12);
+        return formatted ? number.toFormat(decimals) : number.toFixed(decimals);
+    }
+    arToWinston(arString, { formatted = false } = {}) {
+        let number = this.stringToBigNum(arString).shiftedBy(12);
+        return formatted ? number.toFormat() : number.toFixed(0);
+    }
+    compare(winstonStringA, winstonStringB) {
+        let a = this.stringToBigNum(winstonStringA);
+        let b = this.stringToBigNum(winstonStringB);
+        return a.comparedTo(b);
+    }
+    isEqual(winstonStringA, winstonStringB) {
+        return this.compare(winstonStringA, winstonStringB) === 0;
+    }
+    isLessThan(winstonStringA, winstonStringB) {
+        let a = this.stringToBigNum(winstonStringA);
+        let b = this.stringToBigNum(winstonStringB);
+        return a.isLessThan(b);
+    }
+    isGreaterThan(winstonStringA, winstonStringB) {
+        let a = this.stringToBigNum(winstonStringA);
+        let b = this.stringToBigNum(winstonStringB);
+        return a.isGreaterThan(b);
+    }
+    add(winstonStringA, winstonStringB) {
+        let a = this.stringToBigNum(winstonStringA);
+        let b = this.stringToBigNum(winstonStringB);
+        return a.plus(winstonStringB).toFixed(0);
+    }
+    sub(winstonStringA, winstonStringB) {
+        let a = this.stringToBigNum(winstonStringA);
+        let b = this.stringToBigNum(winstonStringB);
+        return a.minus(winstonStringB).toFixed(0);
+    }
+    stringToBigNum(stringValue, decimalPlaces = 12) {
+        return this.BigNum(stringValue, decimalPlaces);
+    }
+}
+exports.Ar = Ar;
+//# sourceMappingURL=ar.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/arweave.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/arweave.js ***!
+  \***********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const ar_1 = __webpack_require__(/*! ./ar */ "./node_modules/arweave/dist/node/arweave/ar.js");
+const api_1 = __webpack_require__(/*! ./lib/api */ "./node_modules/arweave/dist/node/arweave/lib/api.js");
+const network_1 = __webpack_require__(/*! ./network */ "./node_modules/arweave/dist/node/arweave/network.js");
+const transactions_1 = __webpack_require__(/*! ./transactions */ "./node_modules/arweave/dist/node/arweave/transactions.js");
+const wallets_1 = __webpack_require__(/*! ./wallets */ "./node_modules/arweave/dist/node/arweave/wallets.js");
+const transaction_1 = __webpack_require__(/*! ./lib/transaction */ "./node_modules/arweave/dist/node/arweave/lib/transaction.js");
+const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
+class Arweave {
+    constructor(config) {
+        this.crypto = config.crypto;
+        this.api = new api_1.Api(config.api);
+        this.wallets = new wallets_1.Wallets(this.api, config.crypto);
+        this.transactions = new transactions_1.Transactions(this.api, config.crypto);
+        this.network = new network_1.Network(this.api);
+        this.ar = new ar_1.Ar;
+        this.utils = utils_1.ArweaveUtils;
+    }
+    getConfig() {
+        return {
+            api: this.api.getConfig(),
+            crypto: null
+        };
+    }
+    async createTransaction(attributes, jwk) {
+        if (!attributes.data && !(attributes.target && attributes.quantity)) {
+            throw new Error(`A new Arweave transaction must have a 'data' value, or 'target' and 'quantity' values.`);
+        }
+        let from = await this.wallets.jwkToAddress(jwk);
+        if (attributes.owner == undefined) {
+            attributes.owner = jwk.n;
+        }
+        if (attributes.last_tx == undefined) {
+            attributes.last_tx = await this.wallets.getLastTransactionID(from);
+        }
+        if (attributes.reward == undefined) {
+            let length = (typeof attributes.data == 'string' && attributes.data.length > 0) ? attributes.data.length : 0;
+            let target = (typeof attributes.target == 'string' && attributes.target.length > 0) ? attributes.target : null;
+            attributes.reward = await this.transactions.getPrice(length, target);
+        }
+        if (attributes.data) {
+            attributes.data = utils_1.ArweaveUtils.stringToB64Url(attributes.data);
+        }
+        return new transaction_1.Transaction(attributes);
+    }
+}
+exports.Arweave = Arweave;
+//# sourceMappingURL=arweave.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/lib/api.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/api.js ***!
+  \***********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const axios_1 = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+class Api {
+    constructor(config) {
+        this.METHOD_GET = 'GET';
+        this.METHOD_POST = 'POST';
+        this.applyConfig(config);
+    }
+    applyConfig(config) {
+        this.config = this.mergeDefaults(config);
+    }
+    getConfig() {
+        return this.config;
+    }
+    mergeDefaults(config) {
+        return {
+            host: config.host,
+            protocol: config.protocol || 'http',
+            port: config.port || 1984,
+            timeout: config.timeout || 20000,
+            logging: config.logging || false,
+        };
+    }
+    async get(endpoint, config) {
+        try {
+            return await this.request().get(endpoint, config);
+        }
+        catch (error) {
+            if (error.response && error.response.status) {
+                return error.response;
+            }
+            throw error;
+        }
+    }
+    async post(endpoint, body, config) {
+        try {
+            return await this.request().post(endpoint, body, config);
+        }
+        catch (error) {
+            if (error.response && error.response.status) {
+                return error.response;
+            }
+            throw error;
+        }
+    }
+    /**
+     * Get an AxiosInstance with the base configuration setup to fire off
+     * a request to the network.
+     */
+    request() {
+        let instance = axios_1.default.create({
+            baseURL: `${this.config.protocol}://${this.config.host}:${this.config.port}`,
+            timeout: 1000,
+        });
+        if (this.config.logging) {
+            instance.interceptors.request.use(request => {
+                console.log(`Requesting: ${request.baseURL}/${request.url}`);
+                return request;
+            });
+            instance.interceptors.response.use(response => {
+                console.log(`Response:   ${response.config.url} - ${response.status}`);
+                return response;
+            });
+        }
+        return instance;
+    }
+}
+exports.Api = Api;
+//# sourceMappingURL=api.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js":
+/*!**************************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js ***!
+  \**************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const pem_1 = __webpack_require__(/*! ./pem */ "./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js");
+const crypto = __webpack_require__(/*! crypto */ "crypto");
+class NodeCryptoDriver {
+    constructor() {
+        this.keyLength = 4096;
+        this.publicExponent = 0x10001;
+        this.hashAlgorithm = 'sha256';
+    }
+    generateJWK() {
+        if (typeof crypto.generateKeyPair != "function") {
+            throw new Error('Keypair generation not supported in this version of Node, only supported in versions 10+');
+        }
+        return new Promise((resolve, reject) => {
+            crypto
+                .generateKeyPair('rsa', {
+                modulusLength: this.keyLength,
+                publicExponent: this.publicExponent,
+                privateKeyEncoding: {
+                    type: 'pkcs1',
+                    format: 'pem'
+                },
+                publicKeyEncoding: {
+                    type: 'pkcs1',
+                    format: 'pem'
+                }
+            }, (err, publicKey, privateKey) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(this.pemToJWK(privateKey));
+            });
+        });
+    }
+    sign(jwk, data) {
+        return new Promise((resolve, reject) => {
+            resolve(crypto
+                .createSign(this.hashAlgorithm)
+                .update(data)
+                .sign({
+                key: this.jwkToPem(jwk),
+                padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+                saltLength: 0
+            }));
+        });
+    }
+    verify(publicModulus, data, signature) {
+        return new Promise((resolve, reject) => {
+            const publicKey = {
+                kty: 'RSA',
+                e: 'AQAB',
+                n: publicModulus,
+            };
+            const pem = this.jwkToPem(publicKey);
+            resolve(crypto
+                .createVerify(this.hashAlgorithm)
+                .update(data)
+                .verify({
+                key: pem,
+                padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+                saltLength: 0
+            }, signature));
+        });
+    }
+    hash(data) {
+        return new Promise((resolve, reject) => {
+            resolve(crypto
+                .createHash(this.hashAlgorithm)
+                .update(data)
+                .digest());
+        });
+    }
+    jwkToPem(jwk) {
+        return pem_1.jwkTopem(jwk);
+    }
+    pemToJWK(pem) {
+        let jwk = pem_1.pemTojwk(pem);
+        return jwk;
+    }
+}
+exports.NodeCryptoDriver = NodeCryptoDriver;
+//# sourceMappingURL=node-driver.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+// @ts-ignore
+const asn = __webpack_require__(/*! arweave-asn1 */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1.js");
+function urlize(base64) {
+    return base64.replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+}
+function hex2b64url(str) {
+    return urlize(Buffer.from(str, 'hex').toString('base64'));
+}
+var RSAPublicKey = asn.define('RSAPublicKey', function () {
+    this.seq().obj(this.key('n').int(), this.key('e').int());
+});
+var AlgorithmIdentifier = asn.define('AlgorithmIdentifier', function () {
+    this.seq().obj(this.key('algorithm').objid(), this.key('parameters').optional().any());
+});
+var PublicKeyInfo = asn.define('PublicKeyInfo', function () {
+    this.seq().obj(this.key('algorithm').use(AlgorithmIdentifier), this.key('publicKey').bitstr());
+});
+var Version = asn.define('Version', function () {
+    this.int({
+        0: 'two-prime',
+        1: 'multi'
+    });
+});
+var OtherPrimeInfos = asn.define('OtherPrimeInfos', function () {
+    this.seq().obj(this.key('ri').int(), this.key('di').int(), this.key('ti').int());
+});
+var RSAPrivateKey = asn.define('RSAPrivateKey', function () {
+    this.seq().obj(this.key('version').use(Version), this.key('n').int(), this.key('e').int(), this.key('d').int(), this.key('p').int(), this.key('q').int(), this.key('dp').int(), this.key('dq').int(), this.key('qi').int(), this.key('other').optional().use(OtherPrimeInfos));
+});
+var PrivateKeyInfo = asn.define('PrivateKeyInfo', function () {
+    this.seq().obj(this.key('version').use(Version), this.key('algorithm').use(AlgorithmIdentifier), this.key('privateKey').bitstr());
+});
+const RSA_OID = '1.2.840.113549.1.1.1';
+function addExtras(obj, extras) {
+    extras = extras || {};
+    Object.keys(extras).forEach(function (key) {
+        obj[key] = extras[key];
+    });
+    return obj;
+}
+function pad(hex) {
+    return (hex.length % 2 === 1) ? '0' + hex : hex;
+}
+function decodeRsaPublic(buffer, extras) {
+    var key = RSAPublicKey.decode(buffer, 'der');
+    var e = pad(key.e.toString(16));
+    var jwk = {
+        kty: 'RSA',
+        n: bn2base64url(key.n),
+        e: hex2b64url(e)
+    };
+    return addExtras(jwk, extras);
+}
+function decodeRsaPrivate(buffer, extras) {
+    var key = RSAPrivateKey.decode(buffer, 'der');
+    var e = pad(key.e.toString(16));
+    var jwk = {
+        kty: 'RSA',
+        n: bn2base64url(key.n),
+        e: hex2b64url(e),
+        d: bn2base64url(key.d),
+        p: bn2base64url(key.p),
+        q: bn2base64url(key.q),
+        dp: bn2base64url(key.dp),
+        dq: bn2base64url(key.dq),
+        qi: bn2base64url(key.qi)
+    };
+    return addExtras(jwk, extras);
+}
+function decodePublic(buffer, extras) {
+    var info = PublicKeyInfo.decode(buffer, 'der');
+    return decodeRsaPublic(info.publicKey.data, extras);
+}
+function decodePrivate(buffer, extras) {
+    var info = PrivateKeyInfo.decode(buffer, 'der');
+    return decodeRsaPrivate(info.privateKey.data, extras);
+}
+function getDecoder(header) {
+    var match = /^-----BEGIN (RSA )?(PUBLIC|PRIVATE) KEY-----$/.exec(header);
+    if (!match) {
+        return null;
+    }
+    var isRSA = !!(match[1]);
+    var isPrivate = (match[2] === 'PRIVATE');
+    if (isPrivate) {
+        return isRSA ? decodeRsaPrivate : decodePrivate;
+    }
+    else {
+        return isRSA ? decodeRsaPublic : decodePublic;
+    }
+}
+function parse(jwk) {
+    return {
+        n: string2bn(jwk.n),
+        e: string2bn(jwk.e),
+        d: jwk.d && string2bn(jwk.d),
+        p: jwk.p && string2bn(jwk.p),
+        q: jwk.q && string2bn(jwk.q),
+        dp: jwk.dp && string2bn(jwk.dp),
+        dq: jwk.dq && string2bn(jwk.dq),
+        qi: jwk.qi && string2bn(jwk.qi)
+    };
+}
+function bn2base64url(bn) {
+    return hex2b64url(pad(bn.toString(16)));
+}
+function base64url2bn(str) {
+    return new asn.bignum(Buffer.from(str, 'base64'));
+}
+function string2bn(str) {
+    if (/^[0-9]+$/.test(str)) {
+        return new asn.bignum(str, 10);
+    }
+    return base64url2bn(str);
+}
+function pemTojwk(pem, extras) {
+    var text = pem.toString().split(/(\r\n|\r|\n)+/g);
+    text = text.filter(function (line) {
+        return line.trim().length !== 0;
+    });
+    var decoder = getDecoder(text[0]);
+    text = text.slice(1, -1).join('');
+    return decoder(Buffer.from(text.replace(/[^\w\d\+\/=]+/g, ''), 'base64'), extras);
+}
+exports.pemTojwk = pemTojwk;
+function jwkTopem(json) {
+    var jwk = parse(json);
+    var isPrivate = !!(jwk.d);
+    var t = isPrivate ? 'PRIVATE' : 'PUBLIC';
+    var header = '-----BEGIN RSA ' + t + ' KEY-----\n';
+    var footer = '\n-----END RSA ' + t + ' KEY-----\n';
+    var data = Buffer.alloc(0);
+    if (isPrivate) {
+        jwk.version = 'two-prime';
+        data = RSAPrivateKey.encode(jwk, 'der');
+    }
+    else {
+        data = RSAPublicKey.encode(jwk, 'der');
+    }
+    var body = data.toString('base64').match(/.{1,64}/g).join('\n');
+    return header + body + footer;
+}
+exports.jwkTopem = jwkTopem;
+//# sourceMappingURL=pem.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/lib/error.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/error.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+;
+class ArweaveError extends Error {
+    constructor(type, optional) {
+        if (optional.message) {
+            super(optional.message);
+        }
+        else {
+            super();
+        }
+        this.type = type;
+        this.response = optional.response;
+    }
+    getType() {
+        return this.type;
+    }
+}
+exports.ArweaveError = ArweaveError;
+//# sourceMappingURL=error.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/lib/transaction.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/transaction.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const utils_1 = __webpack_require__(/*! ./utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
+class BaseObject {
+    get(field, options) {
+        if (!Object.getOwnPropertyNames(this).includes(field)) {
+            throw new Error(`Field "${field}" is not a property of the Arweave Transaction class.`);
+        }
+        if (options && options.decode == true) {
+            if (options && options.string) {
+                return utils_1.ArweaveUtils.b64UrlToString(this[field]);
+            }
+            return utils_1.ArweaveUtils.b64UrlToBuffer(this[field]);
+        }
+        return this[field];
+    }
+}
+class Tag extends BaseObject {
+    constructor(name, value, decode = false) {
+        super();
+        this.name = name;
+        this.value = value;
+    }
+}
+exports.Tag = Tag;
+class Transaction extends BaseObject {
+    constructor(attributes) {
+        super();
+        this.last_tx = '';
+        this.owner = '';
+        this.tags = [];
+        this.target = '';
+        this.quantity = '0';
+        this.data = '';
+        this.reward = '0';
+        this.signature = '';
+        Object.assign(this, attributes);
+        if (attributes.tags) {
+            this.tags = attributes.tags.map((tag) => {
+                return new Tag(tag.name, tag.value);
+            });
+        }
+    }
+    addTag(name, value) {
+        this.tags.push(new Tag(utils_1.ArweaveUtils.stringToB64Url(name), utils_1.ArweaveUtils.stringToB64Url(value)));
+    }
+    toJSON() {
+        return {
+            id: this.id,
+            last_tx: this.last_tx,
+            owner: this.owner,
+            tags: this.tags,
+            target: this.target,
+            quantity: this.quantity,
+            data: this.data,
+            reward: this.reward,
+            signature: this.signature
+        };
+    }
+    setSignature({ signature, id }) {
+        this.signature = signature;
+        this.id = id;
+    }
+    getSignatureData() {
+        let tagString = this.tags.reduce((accumulator, tag) => {
+            return accumulator + tag.get('name', { decode: true, string: true }) + tag.get('value', { decode: true, string: true });
+        }, '');
+        return utils_1.ArweaveUtils.concatBuffers([
+            this.get('owner', { decode: true, string: false }),
+            this.get('target', { decode: true, string: false }),
+            this.get('data', { decode: true, string: false }),
+            utils_1.ArweaveUtils.stringToBuffer(this.quantity),
+            utils_1.ArweaveUtils.stringToBuffer(this.reward),
+            this.get('last_tx', { decode: true, string: false }),
+            utils_1.ArweaveUtils.stringToBuffer(tagString)
+        ]);
+    }
+}
+exports.Transaction = Transaction;
+//# sourceMappingURL=transaction.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/lib/utils.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/utils.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const B64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
+class ArweaveUtils {
+    static concatBuffers(buffers) {
+        let total_length = 0;
+        for (let i = 0; i < buffers.length; i++) {
+            total_length += buffers[i].byteLength;
+        }
+        let temp = new Uint8Array(total_length);
+        let offset = 0;
+        temp.set(new Uint8Array(buffers[0]), offset);
+        offset += buffers[0].byteLength;
+        for (let i = 1; i < buffers.length; i++) {
+            temp.set(new Uint8Array(buffers[i]), offset);
+            offset += buffers[i].byteLength;
+        }
+        return temp;
+    }
+    static b64UrlToString(b64UrlString) {
+        let buffer = ArweaveUtils.b64UrlToBuffer(b64UrlString);
+        // TextEncoder will be available in browsers, but not in node
+        if (typeof TextDecoder == 'undefined') {
+            const TextDecoder = __webpack_require__(/*! util */ "util").TextDecoder;
+            return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+        }
+        return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    }
+    static stringToBuffer(string) {
+        // TextEncoder will be available in browsers, but not in node
+        if (typeof TextEncoder == 'undefined') {
+            const TextEncoder = __webpack_require__(/*! util */ "util").TextEncoder;
+            return new TextEncoder().encode(string);
+        }
+        return new TextEncoder().encode(string);
+    }
+    static stringToB64Url(string) {
+        return ArweaveUtils.bufferTob64Url(ArweaveUtils.stringToBuffer(string));
+    }
+    static b64UrlToBuffer(b64UrlString) {
+        return new Uint8Array(B64js.toByteArray(ArweaveUtils.b64UrlDecode(b64UrlString)));
+    }
+    static bufferTob64(buffer) {
+        return B64js.fromByteArray(new Uint8Array(buffer));
+    }
+    static bufferTob64Url(buffer) {
+        return ArweaveUtils.b64UrlEncode(ArweaveUtils.bufferTob64(buffer));
+    }
+    static b64UrlEncode(b64UrlString) {
+        return b64UrlString.replace(/\+/g, "-").replace(/\//g, "_").replace(/\=/g, "");
+    }
+    static b64UrlDecode(b64UrlString) {
+        b64UrlString = b64UrlString.replace(/\-/g, "+").replace(/\_/g, "/");
+        let padding;
+        b64UrlString.length % 4 == 0 ? padding = 0 : padding = 4 - (b64UrlString.length % 4);
+        return b64UrlString.concat("=".repeat(padding));
+    }
+}
+exports.ArweaveUtils = ArweaveUtils;
+//# sourceMappingURL=utils.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/network.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/network.js ***!
+  \***********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class Network {
+    constructor(api) {
+        this.api = api;
+    }
+    getInfo() {
+        return this.api.get(`info`).then(response => {
+            return response.data;
+        });
+    }
+    getPeers() {
+        return this.api.get(`peers`).then(response => {
+            return response.data;
+        });
+    }
+}
+exports.Network = Network;
+//# sourceMappingURL=network.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/transactions.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/transactions.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const error_1 = __webpack_require__(/*! ./lib/error */ "./node_modules/arweave/dist/node/arweave/lib/error.js");
+const transaction_1 = __webpack_require__(/*! ./lib/transaction */ "./node_modules/arweave/dist/node/arweave/lib/transaction.js");
+const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
+class Transactions {
+    constructor(api, crypto) {
+        this.api = api;
+        this.crypto = crypto;
+    }
+    getPrice(byteSize, targetAddress) {
+        let endpoint = targetAddress ? `price/${byteSize}/${targetAddress}` : `price/${byteSize}`;
+        return this.api.get(endpoint, {
+            transformResponse: [
+                /**
+                 * We need to specify a response transformer to override
+                 * the default JSON.parse behaviour, as this causes
+                 * winston to be converted to a number and we want to
+                 * return it as a winston string.
+                 * @param data
+                 */
+                function (data) {
+                    return data;
+                }
+            ]
+        }).then(response => {
+            return response.data;
+        });
+    }
+    get(id) {
+        return this.api.get(`tx/${id}`).then(response => {
+            if (response.status == 200 && response.data && response.data.id == id) {
+                return new transaction_1.Transaction(response.data);
+            }
+            if (response.status == 202) {
+                new error_1.ArweaveError("TX_PENDING" /* TX_PENDING */);
+            }
+            if (response.status == 404) {
+                new error_1.ArweaveError("TX_NOT_FOUND" /* TX_NOT_FOUND */);
+            }
+            if (response.status == 410) {
+                new error_1.ArweaveError("TX_FAILED" /* TX_FAILED */);
+            }
+            new error_1.ArweaveError("TX_INVALID" /* TX_INVALID */);
+        });
+    }
+    getStatus(id) {
+        return this.api.get(`tx/${id}/id`).then(response => {
+            return response.status;
+        });
+    }
+    async sign(transaction, jwk) {
+        let dataToSign = transaction.getSignatureData();
+        let rawSignature = await this.crypto.sign(jwk, dataToSign);
+        let id = await this.crypto.hash(rawSignature);
+        transaction.setSignature({
+            signature: utils_1.ArweaveUtils.bufferTob64Url(rawSignature),
+            id: utils_1.ArweaveUtils.bufferTob64Url(id)
+        });
+        return transaction;
+    }
+    async verify(transaction) {
+        const signaturePayload = transaction.getSignatureData();
+        /**
+         * The transaction ID should be a SHA-256 hash of the raw signature bytes, so this needs
+         * to be recalculated from the signature and checked against the transaction ID.
+         */
+        const rawSignature = transaction.get('signature', { decode: true, string: false });
+        const expectedId = utils_1.ArweaveUtils.bufferTob64Url(await this.crypto.hash(rawSignature));
+        if (transaction.id !== expectedId) {
+            throw new Error(`Invalid transaction signature or ID! The transaction ID doesn't match the expected SHA-256 hash of the signature.`);
+        }
+        /**
+         * Now verify the signature is valid and signed by the owner wallet (owner field = originating wallet public key).
+        */
+        return this.crypto.verify(transaction.owner, signaturePayload, rawSignature);
+    }
+    post(transaction) {
+        return this.api.post(`tx`, transaction).then(response => {
+            return response;
+        });
+    }
+}
+exports.Transactions = Transactions;
+//# sourceMappingURL=transactions.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/arweave/wallets.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/wallets.js ***!
+  \***********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
+class Wallets {
+    constructor(api, crypto) {
+        this.api = api;
+        this.crypto = crypto;
+    }
+    /**
+     * Get the wallet balance for the given address.
+     *
+     * @param {string} address - The arweave address to get the balance for.
+     *
+     * @returns {Promise<string>} - Promise which resolves with a winston string balance.
+     */
+    getBalance(address) {
+        return this.api.get(`wallet/${address}/balance`, {
+            transformResponse: [
+                /**
+                 * We need to specify a response transformer to override
+                 * the default JSON.parse behaviour, as this causes
+                 * balances to be converted to a number and we want to
+                 * return it as a winston string.
+                 * @param data
+                 */
+                function (data) {
+                    return data;
+                }
+            ]
+        }).then(response => {
+            return response.data;
+        });
+    }
+    /**
+     * Get the last transaction ID for the given wallet address.
+     *
+     * @param {string} address - The arweave address to get the balance for.
+     *
+     * @returns {Promise<string>} - Promise which resolves with a winston string balance.
+     */
+    getLastTransactionID(address) {
+        return this.api.get(`wallet/${address}/last_tx`).then(response => {
+            return response.data;
+        });
+    }
+    generate() {
+        return this.crypto.generateJWK();
+    }
+    async jwkToAddress(jwk) {
+        return utils_1.ArweaveUtils.bufferTob64Url(await this.crypto.hash(utils_1.ArweaveUtils.b64UrlToBuffer(jwk.n)));
+    }
+}
+exports.Wallets = Wallets;
+//# sourceMappingURL=wallets.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/dist/node/node.js":
+/*!************************************************!*\
+  !*** ./node_modules/arweave/dist/node/node.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const arweave_1 = __webpack_require__(/*! ./arweave/arweave */ "./node_modules/arweave/dist/node/arweave/arweave.js");
+const node_driver_1 = __webpack_require__(/*! ./arweave/lib/crypto/node-driver */ "./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js");
+function init(apiConfig) {
+    return new arweave_1.Arweave({
+        api: apiConfig,
+        crypto: new node_driver_1.NodeCryptoDriver
+    });
+}
+exports.init = init;
+//# sourceMappingURL=node.js.map
+
+/***/ }),
+
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1.js ***!
+  \********************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -279,26 +1144,26 @@ const asn1 = exports;
 
 asn1.bignum = __webpack_require__(/*! bn.js */ "./node_modules/bn.js/lib/bn.js");
 
-asn1.define = __webpack_require__(/*! ./asn1/api */ "./node_modules/arweave-asn1/lib/asn1/api.js").define;
-asn1.base = __webpack_require__(/*! ./asn1/base */ "./node_modules/arweave-asn1/lib/asn1/base/index.js");
-asn1.constants = __webpack_require__(/*! ./asn1/constants */ "./node_modules/arweave-asn1/lib/asn1/constants/index.js");
-asn1.decoders = __webpack_require__(/*! ./asn1/decoders */ "./node_modules/arweave-asn1/lib/asn1/decoders/index.js");
-asn1.encoders = __webpack_require__(/*! ./asn1/encoders */ "./node_modules/arweave-asn1/lib/asn1/encoders/index.js");
+asn1.define = __webpack_require__(/*! ./asn1/api */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/api.js").define;
+asn1.base = __webpack_require__(/*! ./asn1/base */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/index.js");
+asn1.constants = __webpack_require__(/*! ./asn1/constants */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/constants/index.js");
+asn1.decoders = __webpack_require__(/*! ./asn1/decoders */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/index.js");
+asn1.encoders = __webpack_require__(/*! ./asn1/encoders */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/index.js");
 
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/api.js":
-/*!***************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/api.js ***!
-  \***************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/api.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/api.js ***!
+  \************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-const asn1 = __webpack_require__(/*! ../asn1 */ "./node_modules/arweave-asn1/lib/asn1.js");
+const asn1 = __webpack_require__(/*! ../asn1 */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1.js");
 const inherits = __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits.js");
 
 const api = exports;
@@ -363,10 +1228,10 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/base/buffer.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/base/buffer.js ***!
-  \***********************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/buffer.js":
+/*!********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/buffer.js ***!
+  \********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -374,7 +1239,7 @@ Entity.prototype.encode = function encode(data, enc, /* internal */ reporter) {
 
 
 const inherits = __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits.js");
-const Reporter = __webpack_require__(/*! ../base */ "./node_modules/arweave-asn1/lib/asn1/base/index.js").Reporter;
+const Reporter = __webpack_require__(/*! ../base */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/index.js").Reporter;
 const Buffer = __webpack_require__(/*! buffer */ "buffer").Buffer;
 
 function DecoderBuffer(base, options) {
@@ -493,10 +1358,10 @@ EncoderBuffer.prototype.join = function join(out, offset) {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/base/index.js":
-/*!**********************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/base/index.js ***!
-  \**********************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/index.js":
+/*!*******************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/index.js ***!
+  \*******************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -505,27 +1370,27 @@ EncoderBuffer.prototype.join = function join(out, offset) {
 
 const base = exports;
 
-base.Reporter = __webpack_require__(/*! ./reporter */ "./node_modules/arweave-asn1/lib/asn1/base/reporter.js").Reporter;
-base.DecoderBuffer = __webpack_require__(/*! ./buffer */ "./node_modules/arweave-asn1/lib/asn1/base/buffer.js").DecoderBuffer;
-base.EncoderBuffer = __webpack_require__(/*! ./buffer */ "./node_modules/arweave-asn1/lib/asn1/base/buffer.js").EncoderBuffer;
-base.Node = __webpack_require__(/*! ./node */ "./node_modules/arweave-asn1/lib/asn1/base/node.js");
+base.Reporter = __webpack_require__(/*! ./reporter */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/reporter.js").Reporter;
+base.DecoderBuffer = __webpack_require__(/*! ./buffer */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/buffer.js").DecoderBuffer;
+base.EncoderBuffer = __webpack_require__(/*! ./buffer */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/buffer.js").EncoderBuffer;
+base.Node = __webpack_require__(/*! ./node */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/node.js");
 
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/base/node.js":
-/*!*********************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/base/node.js ***!
-  \*********************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/node.js":
+/*!******************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/node.js ***!
+  \******************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-const Reporter = __webpack_require__(/*! ../base */ "./node_modules/arweave-asn1/lib/asn1/base/index.js").Reporter;
-const EncoderBuffer = __webpack_require__(/*! ../base */ "./node_modules/arweave-asn1/lib/asn1/base/index.js").EncoderBuffer;
-const DecoderBuffer = __webpack_require__(/*! ../base */ "./node_modules/arweave-asn1/lib/asn1/base/index.js").DecoderBuffer;
+const Reporter = __webpack_require__(/*! ../base */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/index.js").Reporter;
+const EncoderBuffer = __webpack_require__(/*! ../base */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/index.js").EncoderBuffer;
+const DecoderBuffer = __webpack_require__(/*! ../base */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/index.js").DecoderBuffer;
 const assert = __webpack_require__(/*! minimalistic-assert */ "./node_modules/minimalistic-assert/index.js");
 
 // Supported tags
@@ -1162,10 +2027,10 @@ Node.prototype._isPrintstr = function isPrintstr(str) {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/base/reporter.js":
-/*!*************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/base/reporter.js ***!
-  \*************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/reporter.js":
+/*!**********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/base/reporter.js ***!
+  \**********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1297,17 +2162,17 @@ ReporterError.prototype.rethrow = function rethrow(msg) {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/constants/der.js":
-/*!*************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/constants/der.js ***!
-  \*************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/constants/der.js":
+/*!**********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/constants/der.js ***!
+  \**********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-const constants = __webpack_require__(/*! ../constants */ "./node_modules/arweave-asn1/lib/asn1/constants/index.js");
+const constants = __webpack_require__(/*! ../constants */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/constants/index.js");
 
 exports.tagClass = {
   0: 'universal',
@@ -1353,10 +2218,10 @@ exports.tagByName = constants._reverse(exports.tag);
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/constants/index.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/constants/index.js ***!
-  \***************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/constants/index.js":
+/*!************************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/constants/index.js ***!
+  \************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1381,15 +2246,15 @@ constants._reverse = function reverse(map) {
   return res;
 };
 
-constants.der = __webpack_require__(/*! ./der */ "./node_modules/arweave-asn1/lib/asn1/constants/der.js");
+constants.der = __webpack_require__(/*! ./der */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/constants/der.js");
 
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/decoders/der.js":
-/*!************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/decoders/der.js ***!
-  \************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/der.js":
+/*!*********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/der.js ***!
+  \*********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1398,7 +2263,7 @@ constants.der = __webpack_require__(/*! ./der */ "./node_modules/arweave-asn1/li
 
 const inherits = __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits.js");
 
-const asn1 = __webpack_require__(/*! ../../asn1 */ "./node_modules/arweave-asn1/lib/asn1.js");
+const asn1 = __webpack_require__(/*! ../../asn1 */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1.js");
 const base = asn1.base;
 const bignum = asn1.bignum;
 
@@ -1732,10 +2597,10 @@ function derDecodeLen(buf, primitive, fail) {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/decoders/index.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/decoders/index.js ***!
-  \**************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/index.js":
+/*!***********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/index.js ***!
+  \***********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1744,16 +2609,16 @@ function derDecodeLen(buf, primitive, fail) {
 
 const decoders = exports;
 
-decoders.der = __webpack_require__(/*! ./der */ "./node_modules/arweave-asn1/lib/asn1/decoders/der.js");
-decoders.pem = __webpack_require__(/*! ./pem */ "./node_modules/arweave-asn1/lib/asn1/decoders/pem.js");
+decoders.der = __webpack_require__(/*! ./der */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/der.js");
+decoders.pem = __webpack_require__(/*! ./pem */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/pem.js");
 
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/decoders/pem.js":
-/*!************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/decoders/pem.js ***!
-  \************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/pem.js":
+/*!*********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/pem.js ***!
+  \*********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1763,7 +2628,7 @@ decoders.pem = __webpack_require__(/*! ./pem */ "./node_modules/arweave-asn1/lib
 const inherits = __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits.js");
 const Buffer = __webpack_require__(/*! buffer */ "buffer").Buffer;
 
-const DERDecoder = __webpack_require__(/*! ./der */ "./node_modules/arweave-asn1/lib/asn1/decoders/der.js");
+const DERDecoder = __webpack_require__(/*! ./der */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/decoders/der.js");
 
 function PEMDecoder(entity) {
   DERDecoder.call(this, entity);
@@ -1813,10 +2678,10 @@ PEMDecoder.prototype.decode = function decode(data, options) {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/encoders/der.js":
-/*!************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/encoders/der.js ***!
-  \************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/der.js":
+/*!*********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/der.js ***!
+  \*********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1826,7 +2691,7 @@ PEMDecoder.prototype.decode = function decode(data, options) {
 const inherits = __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits.js");
 const Buffer = __webpack_require__(/*! buffer */ "buffer").Buffer;
 
-const asn1 = __webpack_require__(/*! ../../asn1 */ "./node_modules/arweave-asn1/lib/asn1.js");
+const asn1 = __webpack_require__(/*! ../../asn1 */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1.js");
 const base = asn1.base;
 
 // Import DER constants
@@ -2122,10 +2987,10 @@ function encodeTag(tag, primitive, cls, reporter) {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/encoders/index.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/encoders/index.js ***!
-  \**************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/index.js":
+/*!***********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/index.js ***!
+  \***********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2134,16 +2999,16 @@ function encodeTag(tag, primitive, cls, reporter) {
 
 const encoders = exports;
 
-encoders.der = __webpack_require__(/*! ./der */ "./node_modules/arweave-asn1/lib/asn1/encoders/der.js");
-encoders.pem = __webpack_require__(/*! ./pem */ "./node_modules/arweave-asn1/lib/asn1/encoders/pem.js");
+encoders.der = __webpack_require__(/*! ./der */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/der.js");
+encoders.pem = __webpack_require__(/*! ./pem */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/pem.js");
 
 
 /***/ }),
 
-/***/ "./node_modules/arweave-asn1/lib/asn1/encoders/pem.js":
-/*!************************************************************!*\
-  !*** ./node_modules/arweave-asn1/lib/asn1/encoders/pem.js ***!
-  \************************************************************/
+/***/ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/pem.js":
+/*!*********************************************************************************!*\
+  !*** ./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/pem.js ***!
+  \*********************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2152,7 +3017,7 @@ encoders.pem = __webpack_require__(/*! ./pem */ "./node_modules/arweave-asn1/lib
 
 const inherits = __webpack_require__(/*! inherits */ "./node_modules/inherits/inherits.js");
 
-const DEREncoder = __webpack_require__(/*! ./der */ "./node_modules/arweave-asn1/lib/asn1/encoders/der.js");
+const DEREncoder = __webpack_require__(/*! ./der */ "./node_modules/arweave/node_modules/arweave-asn1/lib/asn1/encoders/der.js");
 
 function PEMEncoder(entity) {
   DEREncoder.call(this, entity);
@@ -2172,871 +3037,6 @@ PEMEncoder.prototype.encode = function encode(data, options) {
   return out.join('\n');
 };
 
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/ar.js":
-/*!******************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/ar.js ***!
-  \******************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const bignumber_js_1 = __webpack_require__(/*! bignumber.js */ "./node_modules/bignumber.js/bignumber.mjs");
-class Ar {
-    constructor() {
-        // Configure and assign the constructor function for the bignumber library.
-        this.BigNum = (value, decimals) => {
-            let instance = bignumber_js_1.BigNumber.clone({ DECIMAL_PLACES: decimals });
-            return new instance(value);
-        };
-    }
-    winstonToAr(winstonString, { formatted = false, decimals = 12, trim = true } = {}) {
-        let number = this.stringToBigNum(winstonString, decimals).shiftedBy(-12);
-        return formatted ? number.toFormat(decimals) : number.toFixed(decimals);
-    }
-    arToWinston(arString, { formatted = false } = {}) {
-        let number = this.stringToBigNum(arString).shiftedBy(12);
-        return formatted ? number.toFormat() : number.toFixed(0);
-    }
-    compare(winstonStringA, winstonStringB) {
-        let a = this.stringToBigNum(winstonStringA);
-        let b = this.stringToBigNum(winstonStringB);
-        return a.comparedTo(b);
-    }
-    isEqual(winstonStringA, winstonStringB) {
-        return this.compare(winstonStringA, winstonStringB) === 0;
-    }
-    isLessThan(winstonStringA, winstonStringB) {
-        let a = this.stringToBigNum(winstonStringA);
-        let b = this.stringToBigNum(winstonStringB);
-        return a.isLessThan(b);
-    }
-    isGreaterThan(winstonStringA, winstonStringB) {
-        let a = this.stringToBigNum(winstonStringA);
-        let b = this.stringToBigNum(winstonStringB);
-        return a.isGreaterThan(b);
-    }
-    add(winstonStringA, winstonStringB) {
-        let a = this.stringToBigNum(winstonStringA);
-        let b = this.stringToBigNum(winstonStringB);
-        return a.plus(winstonStringB).toFixed(0);
-    }
-    sub(winstonStringA, winstonStringB) {
-        let a = this.stringToBigNum(winstonStringA);
-        let b = this.stringToBigNum(winstonStringB);
-        return a.minus(winstonStringB).toFixed(0);
-    }
-    stringToBigNum(stringValue, decimalPlaces = 12) {
-        return this.BigNum(stringValue, decimalPlaces);
-    }
-}
-exports.Ar = Ar;
-//# sourceMappingURL=ar.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/arweave.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/arweave.js ***!
-  \***********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const ar_1 = __webpack_require__(/*! ./ar */ "./node_modules/arweave/dist/node/arweave/ar.js");
-const api_1 = __webpack_require__(/*! ./lib/api */ "./node_modules/arweave/dist/node/arweave/lib/api.js");
-const network_1 = __webpack_require__(/*! ./network */ "./node_modules/arweave/dist/node/arweave/network.js");
-const transactions_1 = __webpack_require__(/*! ./transactions */ "./node_modules/arweave/dist/node/arweave/transactions.js");
-const wallets_1 = __webpack_require__(/*! ./wallets */ "./node_modules/arweave/dist/node/arweave/wallets.js");
-const transaction_1 = __webpack_require__(/*! ./lib/transaction */ "./node_modules/arweave/dist/node/arweave/lib/transaction.js");
-const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
-class Arweave {
-    constructor(config) {
-        this.crypto = config.crypto;
-        this.api = new api_1.Api(config.api);
-        this.wallets = new wallets_1.Wallets(this.api, config.crypto);
-        this.transactions = new transactions_1.Transactions(this.api, config.crypto);
-        this.network = new network_1.Network(this.api);
-        this.ar = new ar_1.Ar;
-        this.utils = utils_1.ArweaveUtils;
-    }
-    getConfig() {
-        return {
-            api: this.api.getConfig(),
-            crypto: null
-        };
-    }
-    async createTransaction(attributes, jwk) {
-        if (!attributes.data && !(attributes.target && attributes.quantity)) {
-            throw new Error(`A new Arweave transaction must have a 'data' value, or 'target' and 'quantity' values.`);
-        }
-        let from = await this.wallets.jwkToAddress(jwk);
-        if (attributes.owner == undefined) {
-            attributes.owner = jwk.n;
-        }
-        if (attributes.last_tx == undefined) {
-            attributes.last_tx = await this.wallets.getLastTransactionID(from);
-        }
-        if (attributes.reward == undefined) {
-            let length = (typeof attributes.data == 'string' && attributes.data.length > 0) ? attributes.data.length : 0;
-            let target = (typeof attributes.target == 'string' && attributes.target.length > 0) ? attributes.target : null;
-            attributes.reward = await this.transactions.getPrice(length, target);
-        }
-        if (attributes.data) {
-            attributes.data = utils_1.ArweaveUtils.stringToB64Url(attributes.data);
-        }
-        return new transaction_1.Transaction(attributes);
-    }
-}
-exports.Arweave = Arweave;
-//# sourceMappingURL=arweave.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/lib/api.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/lib/api.js ***!
-  \***********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
-class Api {
-    constructor(config) {
-        this.METHOD_GET = 'GET';
-        this.METHOD_POST = 'POST';
-        this.applyConfig(config);
-    }
-    applyConfig(config) {
-        this.config = this.mergeDefaults(config);
-    }
-    getConfig() {
-        return this.config;
-    }
-    mergeDefaults(config) {
-        return {
-            host: config.host,
-            protocol: config.protocol || 'http',
-            port: config.port || 1984,
-            timeout: config.timeout || 20000,
-            logging: config.logging || false,
-        };
-    }
-    async get(endpoint, config) {
-        try {
-            return await this.request().get(endpoint, config);
-        }
-        catch (error) {
-            if (error.response && error.response.status) {
-                return error.response;
-            }
-            throw error;
-        }
-    }
-    async post(endpoint, body, config) {
-        try {
-            return await this.request().post(endpoint, body, config);
-        }
-        catch (error) {
-            if (error.response && error.response.status) {
-                return error.response;
-            }
-            throw error;
-        }
-    }
-    /**
-     * Get an AxiosInstance with the base configuration setup to fire off
-     * a request to the network.
-     */
-    request() {
-        let instance = axios_1.default.create({
-            baseURL: `${this.config.protocol}://${this.config.host}:${this.config.port}`,
-            timeout: 1000,
-        });
-        if (this.config.logging) {
-            instance.interceptors.request.use(request => {
-                console.log(`Requesting: ${request.baseURL}/${request.url}`);
-                return request;
-            });
-            instance.interceptors.response.use(response => {
-                console.log(`Response:   ${response.config.url} - ${response.status}`);
-                return response;
-            });
-        }
-        return instance;
-    }
-}
-exports.Api = Api;
-//# sourceMappingURL=api.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js":
-/*!**************************************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js ***!
-  \**************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const pem_1 = __webpack_require__(/*! ./pem */ "./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js");
-const crypto = __webpack_require__(/*! crypto */ "crypto");
-class NodeCryptoDriver {
-    constructor() {
-        this.keyLength = 4096;
-        this.publicExponent = 0x10001;
-        this.hashAlgorithm = 'sha256';
-    }
-    generateJWK() {
-        if (typeof crypto.generateKeyPair != "function") {
-            throw new Error('Keypair generation not supported in this version of Node, only supported in versions 10+');
-        }
-        return new Promise((resolve, reject) => {
-            crypto
-                .generateKeyPair('rsa', {
-                modulusLength: this.keyLength,
-                publicExponent: this.publicExponent,
-                privateKeyEncoding: {
-                    type: 'pkcs1',
-                    format: 'pem'
-                },
-                publicKeyEncoding: {
-                    type: 'pkcs1',
-                    format: 'pem'
-                }
-            }, (err, publicKey, privateKey) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(this.pemToJWK(privateKey));
-            });
-        });
-    }
-    sign(jwk, data) {
-        return new Promise((resolve, reject) => {
-            resolve(crypto
-                .createSign(this.hashAlgorithm)
-                .update(data)
-                .sign({
-                key: this.jwkToPem(jwk),
-                padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-                saltLength: 0
-            }));
-        });
-    }
-    verify(publicModulus, data, signature) {
-        return new Promise((resolve, reject) => {
-            const publicKey = {
-                kty: 'RSA',
-                e: 'AQAB',
-                n: publicModulus,
-            };
-            const pem = this.jwkToPem(publicKey);
-            resolve(crypto
-                .createVerify(this.hashAlgorithm)
-                .update(data)
-                .verify({
-                key: pem,
-                padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
-                saltLength: 0
-            }, signature));
-        });
-    }
-    hash(data) {
-        return new Promise((resolve, reject) => {
-            resolve(crypto
-                .createHash(this.hashAlgorithm)
-                .update(data)
-                .digest());
-        });
-    }
-    jwkToPem(jwk) {
-        return pem_1.jwkTopem(jwk);
-    }
-    pemToJWK(pem) {
-        let jwk = pem_1.pemTojwk(pem);
-        return jwk;
-    }
-}
-exports.NodeCryptoDriver = NodeCryptoDriver;
-//# sourceMappingURL=node-driver.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js":
-/*!******************************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js ***!
-  \******************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-// @ts-ignore
-const asn = __webpack_require__(/*! arweave-asn1 */ "./node_modules/arweave-asn1/lib/asn1.js");
-function urlize(base64) {
-    return base64.replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
-}
-function hex2b64url(str) {
-    return urlize(Buffer.from(str, 'hex').toString('base64'));
-}
-var RSAPublicKey = asn.define('RSAPublicKey', function () {
-    this.seq().obj(this.key('n').int(), this.key('e').int());
-});
-var AlgorithmIdentifier = asn.define('AlgorithmIdentifier', function () {
-    this.seq().obj(this.key('algorithm').objid(), this.key('parameters').optional().any());
-});
-var PublicKeyInfo = asn.define('PublicKeyInfo', function () {
-    this.seq().obj(this.key('algorithm').use(AlgorithmIdentifier), this.key('publicKey').bitstr());
-});
-var Version = asn.define('Version', function () {
-    this.int({
-        0: 'two-prime',
-        1: 'multi'
-    });
-});
-var OtherPrimeInfos = asn.define('OtherPrimeInfos', function () {
-    this.seq().obj(this.key('ri').int(), this.key('di').int(), this.key('ti').int());
-});
-var RSAPrivateKey = asn.define('RSAPrivateKey', function () {
-    this.seq().obj(this.key('version').use(Version), this.key('n').int(), this.key('e').int(), this.key('d').int(), this.key('p').int(), this.key('q').int(), this.key('dp').int(), this.key('dq').int(), this.key('qi').int(), this.key('other').optional().use(OtherPrimeInfos));
-});
-var PrivateKeyInfo = asn.define('PrivateKeyInfo', function () {
-    this.seq().obj(this.key('version').use(Version), this.key('algorithm').use(AlgorithmIdentifier), this.key('privateKey').bitstr());
-});
-const RSA_OID = '1.2.840.113549.1.1.1';
-function addExtras(obj, extras) {
-    extras = extras || {};
-    Object.keys(extras).forEach(function (key) {
-        obj[key] = extras[key];
-    });
-    return obj;
-}
-function pad(hex) {
-    return (hex.length % 2 === 1) ? '0' + hex : hex;
-}
-function decodeRsaPublic(buffer, extras) {
-    var key = RSAPublicKey.decode(buffer, 'der');
-    var e = pad(key.e.toString(16));
-    var jwk = {
-        kty: 'RSA',
-        n: bn2base64url(key.n),
-        e: hex2b64url(e)
-    };
-    return addExtras(jwk, extras);
-}
-function decodeRsaPrivate(buffer, extras) {
-    var key = RSAPrivateKey.decode(buffer, 'der');
-    var e = pad(key.e.toString(16));
-    var jwk = {
-        kty: 'RSA',
-        n: bn2base64url(key.n),
-        e: hex2b64url(e),
-        d: bn2base64url(key.d),
-        p: bn2base64url(key.p),
-        q: bn2base64url(key.q),
-        dp: bn2base64url(key.dp),
-        dq: bn2base64url(key.dq),
-        qi: bn2base64url(key.qi)
-    };
-    return addExtras(jwk, extras);
-}
-function decodePublic(buffer, extras) {
-    var info = PublicKeyInfo.decode(buffer, 'der');
-    return decodeRsaPublic(info.publicKey.data, extras);
-}
-function decodePrivate(buffer, extras) {
-    var info = PrivateKeyInfo.decode(buffer, 'der');
-    return decodeRsaPrivate(info.privateKey.data, extras);
-}
-function getDecoder(header) {
-    var match = /^-----BEGIN (RSA )?(PUBLIC|PRIVATE) KEY-----$/.exec(header);
-    if (!match) {
-        return null;
-    }
-    var isRSA = !!(match[1]);
-    var isPrivate = (match[2] === 'PRIVATE');
-    if (isPrivate) {
-        return isRSA ? decodeRsaPrivate : decodePrivate;
-    }
-    else {
-        return isRSA ? decodeRsaPublic : decodePublic;
-    }
-}
-function parse(jwk) {
-    return {
-        n: string2bn(jwk.n),
-        e: string2bn(jwk.e),
-        d: jwk.d && string2bn(jwk.d),
-        p: jwk.p && string2bn(jwk.p),
-        q: jwk.q && string2bn(jwk.q),
-        dp: jwk.dp && string2bn(jwk.dp),
-        dq: jwk.dq && string2bn(jwk.dq),
-        qi: jwk.qi && string2bn(jwk.qi)
-    };
-}
-function bn2base64url(bn) {
-    return hex2b64url(pad(bn.toString(16)));
-}
-function base64url2bn(str) {
-    return new asn.bignum(Buffer.from(str, 'base64'));
-}
-function string2bn(str) {
-    if (/^[0-9]+$/.test(str)) {
-        return new asn.bignum(str, 10);
-    }
-    return base64url2bn(str);
-}
-function pemTojwk(pem, extras) {
-    var text = pem.toString().split(/(\r\n|\r|\n)+/g);
-    text = text.filter(function (line) {
-        return line.trim().length !== 0;
-    });
-    var decoder = getDecoder(text[0]);
-    text = text.slice(1, -1).join('');
-    return decoder(Buffer.from(text.replace(/[^\w\d\+\/=]+/g, ''), 'base64'), extras);
-}
-exports.pemTojwk = pemTojwk;
-function jwkTopem(json) {
-    var jwk = parse(json);
-    var isPrivate = !!(jwk.d);
-    var t = isPrivate ? 'PRIVATE' : 'PUBLIC';
-    var header = '-----BEGIN RSA ' + t + ' KEY-----\n';
-    var footer = '\n-----END RSA ' + t + ' KEY-----\n';
-    var data = Buffer.alloc(0);
-    if (isPrivate) {
-        jwk.version = 'two-prime';
-        data = RSAPrivateKey.encode(jwk, 'der');
-    }
-    else {
-        data = RSAPublicKey.encode(jwk, 'der');
-    }
-    var body = data.toString('base64').match(/.{1,64}/g).join('\n');
-    return header + body + footer;
-}
-exports.jwkTopem = jwkTopem;
-//# sourceMappingURL=pem.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/lib/error.js":
-/*!*************************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/lib/error.js ***!
-  \*************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-;
-class ArweaveError extends Error {
-    constructor(type, optional) {
-        if (optional.message) {
-            super(optional.message);
-        }
-        else {
-            super();
-        }
-        this.type = type;
-        this.response = optional.response;
-    }
-    getType() {
-        return this.type;
-    }
-}
-exports.ArweaveError = ArweaveError;
-//# sourceMappingURL=error.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/lib/transaction.js":
-/*!*******************************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/lib/transaction.js ***!
-  \*******************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __webpack_require__(/*! ./utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
-class BaseObject {
-    get(field, options) {
-        if (!Object.getOwnPropertyNames(this).includes(field)) {
-            throw new Error(`Field "${field}" is not a property of the Arweave Transaction class.`);
-        }
-        if (options && options.decode == true) {
-            if (options && options.string) {
-                return utils_1.ArweaveUtils.b64UrlToString(this[field]);
-            }
-            return utils_1.ArweaveUtils.b64UrlToBuffer(this[field]);
-        }
-        return this[field];
-    }
-}
-class Tag extends BaseObject {
-    constructor(name, value, decode = false) {
-        super();
-        this.name = name;
-        this.value = value;
-    }
-}
-exports.Tag = Tag;
-class Transaction extends BaseObject {
-    constructor(attributes) {
-        super();
-        this.last_tx = '';
-        this.owner = '';
-        this.tags = [];
-        this.target = '';
-        this.quantity = '0';
-        this.data = '';
-        this.reward = '0';
-        this.signature = '';
-        Object.assign(this, attributes);
-        if (attributes.tags) {
-            this.tags = attributes.tags.map((tag) => {
-                return new Tag(tag.name, tag.value);
-            });
-        }
-    }
-    addTag(name, value) {
-        this.tags.push(new Tag(utils_1.ArweaveUtils.stringToB64Url(name), utils_1.ArweaveUtils.stringToB64Url(value)));
-    }
-    toJSON() {
-        return {
-            id: this.id,
-            last_tx: this.last_tx,
-            owner: this.owner,
-            tags: this.tags,
-            target: this.target,
-            quantity: this.quantity,
-            data: this.data,
-            reward: this.reward,
-            signature: this.signature
-        };
-    }
-    setSignature({ signature, id }) {
-        this.signature = signature;
-        this.id = id;
-    }
-    getSignatureData() {
-        let tagString = this.tags.reduce((accumulator, tag) => {
-            return accumulator + tag.get('name', { decode: true, string: true }) + tag.get('value', { decode: true, string: true });
-        }, '');
-        return utils_1.ArweaveUtils.concatBuffers([
-            this.get('owner', { decode: true, string: false }),
-            this.get('target', { decode: true, string: false }),
-            this.get('data', { decode: true, string: false }),
-            utils_1.ArweaveUtils.stringToBuffer(this.quantity),
-            utils_1.ArweaveUtils.stringToBuffer(this.reward),
-            this.get('last_tx', { decode: true, string: false }),
-            utils_1.ArweaveUtils.stringToBuffer(tagString)
-        ]);
-    }
-}
-exports.Transaction = Transaction;
-//# sourceMappingURL=transaction.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/lib/utils.js":
-/*!*************************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/lib/utils.js ***!
-  \*************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const B64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
-class ArweaveUtils {
-    static concatBuffers(buffers) {
-        let total_length = 0;
-        for (let i = 0; i < buffers.length; i++) {
-            total_length += buffers[i].byteLength;
-        }
-        let temp = new Uint8Array(total_length);
-        let offset = 0;
-        temp.set(new Uint8Array(buffers[0]), offset);
-        offset += buffers[0].byteLength;
-        for (let i = 1; i < buffers.length; i++) {
-            temp.set(new Uint8Array(buffers[i]), offset);
-            offset += buffers[i].byteLength;
-        }
-        return temp;
-    }
-    static b64UrlToString(b64UrlString) {
-        let buffer = ArweaveUtils.b64UrlToBuffer(b64UrlString);
-        // TextEncoder will be available in browsers, but not in node
-        if (typeof TextDecoder == 'undefined') {
-            const TextDecoder = __webpack_require__(/*! util */ "util").TextDecoder;
-            return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
-        }
-        return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
-    }
-    static stringToBuffer(string) {
-        // TextEncoder will be available in browsers, but not in node
-        if (typeof TextEncoder == 'undefined') {
-            const TextEncoder = __webpack_require__(/*! util */ "util").TextEncoder;
-            return new TextEncoder().encode(string);
-        }
-        return new TextEncoder().encode(string);
-    }
-    static stringToB64Url(string) {
-        return ArweaveUtils.bufferTob64Url(ArweaveUtils.stringToBuffer(string));
-    }
-    static b64UrlToBuffer(b64UrlString) {
-        return new Uint8Array(B64js.toByteArray(ArweaveUtils.b64UrlDecode(b64UrlString)));
-    }
-    static bufferTob64(buffer) {
-        return B64js.fromByteArray(new Uint8Array(buffer));
-    }
-    static bufferTob64Url(buffer) {
-        return ArweaveUtils.b64UrlEncode(ArweaveUtils.bufferTob64(buffer));
-    }
-    static b64UrlEncode(b64UrlString) {
-        return b64UrlString.replace(/\+/g, "-").replace(/\//g, "_").replace(/\=/g, "");
-    }
-    static b64UrlDecode(b64UrlString) {
-        b64UrlString = b64UrlString.replace(/\-/g, "+").replace(/\_/g, "/");
-        let padding;
-        b64UrlString.length % 4 == 0 ? padding = 0 : padding = 4 - (b64UrlString.length % 4);
-        return b64UrlString.concat("=".repeat(padding));
-    }
-}
-exports.ArweaveUtils = ArweaveUtils;
-//# sourceMappingURL=utils.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/network.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/network.js ***!
-  \***********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-class Network {
-    constructor(api) {
-        this.api = api;
-    }
-    getInfo() {
-        return this.api.get(`info`).then(response => {
-            return response.data;
-        });
-    }
-    getPeers() {
-        return this.api.get(`peers`).then(response => {
-            return response.data;
-        });
-    }
-}
-exports.Network = Network;
-//# sourceMappingURL=network.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/transactions.js":
-/*!****************************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/transactions.js ***!
-  \****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const error_1 = __webpack_require__(/*! ./lib/error */ "./node_modules/arweave/dist/node/arweave/lib/error.js");
-const transaction_1 = __webpack_require__(/*! ./lib/transaction */ "./node_modules/arweave/dist/node/arweave/lib/transaction.js");
-const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
-class Transactions {
-    constructor(api, crypto) {
-        this.api = api;
-        this.crypto = crypto;
-    }
-    getPrice(byteSize, targetAddress) {
-        let endpoint = targetAddress ? `price/${byteSize}/${targetAddress}` : `price/${byteSize}`;
-        return this.api.get(endpoint, {
-            transformResponse: [
-                /**
-                 * We need to specify a response transformer to override
-                 * the default JSON.parse behaviour, as this causes
-                 * winston to be converted to a number and we want to
-                 * return it as a winston string.
-                 * @param data
-                 */
-                function (data) {
-                    return data;
-                }
-            ]
-        }).then(response => {
-            return response.data;
-        });
-    }
-    get(id) {
-        return this.api.get(`tx/${id}`).then(response => {
-            if (response.status == 200 && response.data && response.data.id == id) {
-                return new transaction_1.Transaction(response.data);
-            }
-            if (response.status == 202) {
-                new error_1.ArweaveError("TX_PENDING" /* TX_PENDING */);
-            }
-            if (response.status == 404) {
-                new error_1.ArweaveError("TX_NOT_FOUND" /* TX_NOT_FOUND */);
-            }
-            if (response.status == 410) {
-                new error_1.ArweaveError("TX_FAILED" /* TX_FAILED */);
-            }
-            new error_1.ArweaveError("TX_INVALID" /* TX_INVALID */);
-        });
-    }
-    getStatus(id) {
-        return this.api.get(`tx/${id}/id`).then(response => {
-            return response.status;
-        });
-    }
-    async sign(transaction, jwk) {
-        let dataToSign = transaction.getSignatureData();
-        let rawSignature = await this.crypto.sign(jwk, dataToSign);
-        let id = await this.crypto.hash(rawSignature);
-        transaction.setSignature({
-            signature: utils_1.ArweaveUtils.bufferTob64Url(rawSignature),
-            id: utils_1.ArweaveUtils.bufferTob64Url(id)
-        });
-        return transaction;
-    }
-    async verify(transaction) {
-        const signaturePayload = transaction.getSignatureData();
-        /**
-         * The transaction ID should be a SHA-256 hash of the raw signature bytes, so this needs
-         * to be recalculated from the signature and checked against the transaction ID.
-         */
-        const rawSignature = transaction.get('signature', { decode: true, string: false });
-        const expectedId = utils_1.ArweaveUtils.bufferTob64Url(await this.crypto.hash(rawSignature));
-        if (transaction.id !== expectedId) {
-            throw new Error(`Invalid transaction signature or ID! The transaction ID doesn't match the expected SHA-256 hash of the signature.`);
-        }
-        /**
-         * Now verify the signature is valid and signed by the owner wallet (owner field = originating wallet public key).
-        */
-        return this.crypto.verify(transaction.owner, signaturePayload, rawSignature);
-    }
-    post(transaction) {
-        return this.api.post(`tx`, transaction).then(response => {
-            return response;
-        });
-    }
-}
-exports.Transactions = Transactions;
-//# sourceMappingURL=transactions.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/arweave/wallets.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/arweave/dist/node/arweave/wallets.js ***!
-  \***********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
-class Wallets {
-    constructor(api, crypto) {
-        this.api = api;
-        this.crypto = crypto;
-    }
-    /**
-     * Get the wallet balance for the given address.
-     *
-     * @param {string} address - The arweave address to get the balance for.
-     *
-     * @returns {Promise<string>} - Promise which resolves with a winston string balance.
-     */
-    getBalance(address) {
-        return this.api.get(`wallet/${address}/balance`, {
-            transformResponse: [
-                /**
-                 * We need to specify a response transformer to override
-                 * the default JSON.parse behaviour, as this causes
-                 * balances to be converted to a number and we want to
-                 * return it as a winston string.
-                 * @param data
-                 */
-                function (data) {
-                    return data;
-                }
-            ]
-        }).then(response => {
-            return response.data;
-        });
-    }
-    /**
-     * Get the last transaction ID for the given wallet address.
-     *
-     * @param {string} address - The arweave address to get the balance for.
-     *
-     * @returns {Promise<string>} - Promise which resolves with a winston string balance.
-     */
-    getLastTransactionID(address) {
-        return this.api.get(`wallet/${address}/last_tx`).then(response => {
-            return response.data;
-        });
-    }
-    generate() {
-        return this.crypto.generateJWK();
-    }
-    async jwkToAddress(jwk) {
-        return utils_1.ArweaveUtils.bufferTob64Url(await this.crypto.hash(utils_1.ArweaveUtils.b64UrlToBuffer(jwk.n)));
-    }
-}
-exports.Wallets = Wallets;
-//# sourceMappingURL=wallets.js.map
-
-/***/ }),
-
-/***/ "./node_modules/arweave/dist/node/node.js":
-/*!************************************************!*\
-  !*** ./node_modules/arweave/dist/node/node.js ***!
-  \************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const arweave_1 = __webpack_require__(/*! ./arweave/arweave */ "./node_modules/arweave/dist/node/arweave/arweave.js");
-const node_driver_1 = __webpack_require__(/*! ./arweave/lib/crypto/node-driver */ "./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js");
-function init(apiConfig) {
-    return new arweave_1.Arweave({
-        api: apiConfig,
-        crypto: new node_driver_1.NodeCryptoDriver
-    });
-}
-exports.init = init;
-//# sourceMappingURL=node.js.map
 
 /***/ }),
 
@@ -4960,10 +4960,10 @@ module.exports = {
 /*!*****************************************!*\
   !*** ./node_modules/axios/package.json ***!
   \*****************************************/
-/*! exports provided: _from, _id, _inBundle, _integrity, _location, _phantomChildren, _requested, _requiredBy, _resolved, _shasum, _spec, _where, author, browser, bugs, bundleDependencies, bundlesize, dependencies, deprecated, description, devDependencies, homepage, keywords, license, main, name, repository, scripts, typings, version, default */
+/*! exports provided: _args, _development, _from, _id, _inBundle, _integrity, _location, _phantomChildren, _requested, _requiredBy, _resolved, _spec, _where, author, browser, bugs, bundlesize, dependencies, description, devDependencies, homepage, keywords, license, main, name, repository, scripts, typings, version, default */
 /***/ (function(module) {
 
-module.exports = {"_from":"axios@^0.18.0","_id":"axios@0.18.0","_inBundle":false,"_integrity":"sha1-MtU+SFHv3AoRmTts0AB4nXDAUQI=","_location":"/axios","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"axios@^0.18.0","name":"axios","escapedName":"axios","rawSpec":"^0.18.0","saveSpec":null,"fetchSpec":"^0.18.0"},"_requiredBy":["/arweave"],"_resolved":"https://registry.npmjs.org/axios/-/axios-0.18.0.tgz","_shasum":"32d53e4851efdc0a11993b6cd000789d70c05102","_spec":"axios@^0.18.0","_where":"/Users/kyle/repos/arweave-deploy/node_modules/arweave","author":{"name":"Matt Zabriskie"},"browser":{"./lib/adapters/http.js":"./lib/adapters/xhr.js"},"bugs":{"url":"https://github.com/axios/axios/issues"},"bundleDependencies":false,"bundlesize":[{"path":"./dist/axios.min.js","threshold":"5kB"}],"dependencies":{"follow-redirects":"^1.3.0","is-buffer":"^1.1.5"},"deprecated":false,"description":"Promise based HTTP client for the browser and node.js","devDependencies":{"bundlesize":"^0.5.7","coveralls":"^2.11.9","es6-promise":"^4.0.5","grunt":"^1.0.1","grunt-banner":"^0.6.0","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-nodeunit":"^1.0.0","grunt-contrib-watch":"^1.0.0","grunt-eslint":"^19.0.0","grunt-karma":"^2.0.0","grunt-ts":"^6.0.0-beta.3","grunt-webpack":"^1.0.18","istanbul-instrumenter-loader":"^1.0.0","jasmine-core":"^2.4.1","karma":"^1.3.0","karma-chrome-launcher":"^2.0.0","karma-coverage":"^1.0.0","karma-firefox-launcher":"^1.0.0","karma-jasmine":"^1.0.2","karma-jasmine-ajax":"^0.1.13","karma-opera-launcher":"^1.0.0","karma-safari-launcher":"^1.0.0","karma-sauce-launcher":"^1.1.0","karma-sinon":"^1.0.5","karma-sourcemap-loader":"^0.3.7","karma-webpack":"^1.7.0","load-grunt-tasks":"^3.5.2","minimist":"^1.2.0","sinon":"^1.17.4","typescript":"^2.0.3","url-search-params":"^0.6.1","webpack":"^1.13.1","webpack-dev-server":"^1.14.1"},"homepage":"https://github.com/axios/axios","keywords":["xhr","http","ajax","promise","node"],"license":"MIT","main":"index.js","name":"axios","repository":{"type":"git","url":"git+https://github.com/axios/axios.git"},"scripts":{"build":"NODE_ENV=production grunt build","coveralls":"cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js","examples":"node ./examples/server.js","postversion":"git push && git push --tags","preversion":"npm test","start":"node ./sandbox/server.js","test":"grunt test && bundlesize","version":"npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json"},"typings":"./index.d.ts","version":"0.18.0"};
+module.exports = {"_args":[["axios@0.18.0","/Users/kyle/repos/arweave-deploy"]],"_development":true,"_from":"axios@0.18.0","_id":"axios@0.18.0","_inBundle":false,"_integrity":"sha1-MtU+SFHv3AoRmTts0AB4nXDAUQI=","_location":"/axios","_phantomChildren":{},"_requested":{"type":"version","registry":true,"raw":"axios@0.18.0","name":"axios","escapedName":"axios","rawSpec":"0.18.0","saveSpec":null,"fetchSpec":"0.18.0"},"_requiredBy":["/arweave"],"_resolved":"https://registry.npmjs.org/axios/-/axios-0.18.0.tgz","_spec":"0.18.0","_where":"/Users/kyle/repos/arweave-deploy","author":{"name":"Matt Zabriskie"},"browser":{"./lib/adapters/http.js":"./lib/adapters/xhr.js"},"bugs":{"url":"https://github.com/axios/axios/issues"},"bundlesize":[{"path":"./dist/axios.min.js","threshold":"5kB"}],"dependencies":{"follow-redirects":"^1.3.0","is-buffer":"^1.1.5"},"description":"Promise based HTTP client for the browser and node.js","devDependencies":{"bundlesize":"^0.5.7","coveralls":"^2.11.9","es6-promise":"^4.0.5","grunt":"^1.0.1","grunt-banner":"^0.6.0","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-nodeunit":"^1.0.0","grunt-contrib-watch":"^1.0.0","grunt-eslint":"^19.0.0","grunt-karma":"^2.0.0","grunt-ts":"^6.0.0-beta.3","grunt-webpack":"^1.0.18","istanbul-instrumenter-loader":"^1.0.0","jasmine-core":"^2.4.1","karma":"^1.3.0","karma-chrome-launcher":"^2.0.0","karma-coverage":"^1.0.0","karma-firefox-launcher":"^1.0.0","karma-jasmine":"^1.0.2","karma-jasmine-ajax":"^0.1.13","karma-opera-launcher":"^1.0.0","karma-safari-launcher":"^1.0.0","karma-sauce-launcher":"^1.1.0","karma-sinon":"^1.0.5","karma-sourcemap-loader":"^0.3.7","karma-webpack":"^1.7.0","load-grunt-tasks":"^3.5.2","minimist":"^1.2.0","sinon":"^1.17.4","typescript":"^2.0.3","url-search-params":"^0.6.1","webpack":"^1.13.1","webpack-dev-server":"^1.14.1"},"homepage":"https://github.com/axios/axios","keywords":["xhr","http","ajax","promise","node"],"license":"MIT","main":"index.js","name":"axios","repository":{"type":"git","url":"git+https://github.com/axios/axios.git"},"scripts":{"build":"NODE_ENV=production grunt build","coveralls":"cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js","examples":"node ./examples/server.js","postversion":"git push && git push --tags","preversion":"npm test","start":"node ./sandbox/server.js","test":"grunt test && bundlesize","version":"npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json"},"typings":"./index.d.ts","version":"0.18.0"};
 
 /***/ }),
 
