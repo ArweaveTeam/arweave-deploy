@@ -1,9 +1,8 @@
-import { JWKInterface } from "arweave/dist/node/arweave/lib/Wallet";
+import { JWKInterface } from "arweave/dist/node/arweave/lib/wallet";
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { promisify } from 'util';
 import { File } from "./file";
 
 export function validateKeyComponents(obj: any): void {
