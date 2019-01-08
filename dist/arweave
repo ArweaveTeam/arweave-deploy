@@ -2175,10 +2175,10 @@ PEMEncoder.prototype.encode = function encode(data, options) {
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/ar.js":
-/*!*********************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/ar.js ***!
-  \*********************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/ar.js":
+/*!******************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/ar.js ***!
+  \******************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2239,23 +2239,23 @@ exports.Ar = Ar;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/arweave.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/arweave.js ***!
-  \**************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/arweave.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/arweave.js ***!
+  \***********************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ar_1 = __webpack_require__(/*! ./ar */ "./node_modules/arweave-js/dist/node/arweave/ar.js");
-const api_1 = __webpack_require__(/*! ./lib/api */ "./node_modules/arweave-js/dist/node/arweave/lib/api.js");
-const network_1 = __webpack_require__(/*! ./network */ "./node_modules/arweave-js/dist/node/arweave/network.js");
-const transactions_1 = __webpack_require__(/*! ./transactions */ "./node_modules/arweave-js/dist/node/arweave/transactions.js");
-const wallets_1 = __webpack_require__(/*! ./wallets */ "./node_modules/arweave-js/dist/node/arweave/wallets.js");
-const transaction_1 = __webpack_require__(/*! ./lib/transaction */ "./node_modules/arweave-js/dist/node/arweave/lib/transaction.js");
-const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave-js/dist/node/arweave/lib/utils.js");
+const ar_1 = __webpack_require__(/*! ./ar */ "./node_modules/arweave/dist/node/arweave/ar.js");
+const api_1 = __webpack_require__(/*! ./lib/api */ "./node_modules/arweave/dist/node/arweave/lib/api.js");
+const network_1 = __webpack_require__(/*! ./network */ "./node_modules/arweave/dist/node/arweave/network.js");
+const transactions_1 = __webpack_require__(/*! ./transactions */ "./node_modules/arweave/dist/node/arweave/transactions.js");
+const wallets_1 = __webpack_require__(/*! ./wallets */ "./node_modules/arweave/dist/node/arweave/wallets.js");
+const transaction_1 = __webpack_require__(/*! ./lib/transaction */ "./node_modules/arweave/dist/node/arweave/lib/transaction.js");
+const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
 class Arweave {
     constructor(config) {
         this.crypto = config.crypto;
@@ -2299,10 +2299,10 @@ exports.Arweave = Arweave;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/lib/api.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/lib/api.js ***!
-  \**************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/lib/api.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/api.js ***!
+  \***********************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2380,17 +2380,17 @@ exports.Api = Api;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/lib/crypto/node-driver.js":
-/*!*****************************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/lib/crypto/node-driver.js ***!
-  \*****************************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js":
+/*!**************************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js ***!
+  \**************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const pem_1 = __webpack_require__(/*! ./pem */ "./node_modules/arweave-js/dist/node/arweave/lib/crypto/pem.js");
+const pem_1 = __webpack_require__(/*! ./pem */ "./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js");
 const crypto = __webpack_require__(/*! crypto */ "crypto");
 class NodeCryptoDriver {
     constructor() {
@@ -2399,8 +2399,8 @@ class NodeCryptoDriver {
         this.hashAlgorithm = 'sha256';
     }
     generateJWK() {
-        if (typeof !crypto.generateKeyPair == 'function') {
-            throw new Error('Keypair generation not supported in this version of Node, only supported in versions 10.x+');
+        if (typeof crypto.generateKeyPair != "function") {
+            throw new Error('Keypair generation not supported in this version of Node, only supported in versions 10+');
         }
         return new Promise((resolve, reject) => {
             crypto
@@ -2423,11 +2423,6 @@ class NodeCryptoDriver {
             });
         });
     }
-    /**
-     *
-     * @param jwk
-     * @param data
-     */
     sign(jwk, data) {
         return new Promise((resolve, reject) => {
             resolve(crypto
@@ -2440,6 +2435,24 @@ class NodeCryptoDriver {
             }));
         });
     }
+    verify(publicModulus, data, signature) {
+        return new Promise((resolve, reject) => {
+            const publicKey = {
+                kty: 'RSA',
+                e: 'AQAB',
+                n: publicModulus,
+            };
+            const pem = this.jwkToPem(publicKey);
+            resolve(crypto
+                .createVerify(this.hashAlgorithm)
+                .update(data)
+                .verify({
+                key: pem,
+                padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+                saltLength: 0
+            }, signature));
+        });
+    }
     hash(data) {
         return new Promise((resolve, reject) => {
             resolve(crypto
@@ -2449,10 +2462,10 @@ class NodeCryptoDriver {
         });
     }
     jwkToPem(jwk) {
-        return pem_1.jwk2pem(jwk);
+        return pem_1.jwkTopem(jwk);
     }
     pemToJWK(pem) {
-        let jwk = pem_1.pem2jwk(pem);
+        let jwk = pem_1.pemTojwk(pem);
         return jwk;
     }
 }
@@ -2461,10 +2474,10 @@ exports.NodeCryptoDriver = NodeCryptoDriver;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/lib/crypto/pem.js":
-/*!*********************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/lib/crypto/pem.js ***!
-  \*********************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/crypto/pem.js ***!
+  \******************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2588,7 +2601,7 @@ function string2bn(str) {
     }
     return base64url2bn(str);
 }
-function pem2jwk(pem, extras) {
+function pemTojwk(pem, extras) {
     var text = pem.toString().split(/(\r\n|\r|\n)+/g);
     text = text.filter(function (line) {
         return line.trim().length !== 0;
@@ -2597,8 +2610,8 @@ function pem2jwk(pem, extras) {
     text = text.slice(1, -1).join('');
     return decoder(Buffer.from(text.replace(/[^\w\d\+\/=]+/g, ''), 'base64'), extras);
 }
-exports.pem2jwk = pem2jwk;
-function jwk2pem(json) {
+exports.pemTojwk = pemTojwk;
+function jwkTopem(json) {
     var jwk = parse(json);
     var isPrivate = !!(jwk.d);
     var t = isPrivate ? 'PRIVATE' : 'PUBLIC';
@@ -2615,15 +2628,15 @@ function jwk2pem(json) {
     var body = data.toString('base64').match(/.{1,64}/g).join('\n');
     return header + body + footer;
 }
-exports.jwk2pem = jwk2pem;
+exports.jwkTopem = jwkTopem;
 //# sourceMappingURL=pem.js.map
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/lib/error.js":
-/*!****************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/lib/error.js ***!
-  \****************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/lib/error.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/error.js ***!
+  \*************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2651,17 +2664,17 @@ exports.ArweaveError = ArweaveError;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/lib/transaction.js":
-/*!**********************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/lib/transaction.js ***!
-  \**********************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/lib/transaction.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/transaction.js ***!
+  \*******************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __webpack_require__(/*! ./utils */ "./node_modules/arweave-js/dist/node/arweave/lib/utils.js");
+const utils_1 = __webpack_require__(/*! ./utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
 class BaseObject {
     get(field, options) {
         if (!Object.getOwnPropertyNames(this).includes(field)) {
@@ -2696,6 +2709,11 @@ class Transaction extends BaseObject {
         this.reward = '0';
         this.signature = '';
         Object.assign(this, attributes);
+        if (attributes.tags) {
+            this.tags = attributes.tags.map((tag) => {
+                return new Tag(tag.name, tag.value);
+            });
+        }
     }
     addTag(name, value) {
         this.tags.push(new Tag(utils_1.ArweaveUtils.stringToB64Url(name), utils_1.ArweaveUtils.stringToB64Url(value)));
@@ -2719,7 +2737,7 @@ class Transaction extends BaseObject {
     }
     getSignatureData() {
         let tagString = this.tags.reduce((accumulator, tag) => {
-            return accumulator + '' + tag.get('name', { decode: true, string: true }) + '' + tag.get('value', { decode: true, string: true });
+            return accumulator + tag.get('name', { decode: true, string: true }) + tag.get('value', { decode: true, string: true });
         }, '');
         return utils_1.ArweaveUtils.concatBuffers([
             this.get('owner', { decode: true, string: false }),
@@ -2737,10 +2755,10 @@ exports.Transaction = Transaction;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/lib/utils.js":
-/*!****************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/lib/utils.js ***!
-  \****************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/lib/utils.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/lib/utils.js ***!
+  \*************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2808,10 +2826,10 @@ exports.ArweaveUtils = ArweaveUtils;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/network.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/network.js ***!
-  \**************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/network.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/network.js ***!
+  \***********************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2838,19 +2856,19 @@ exports.Network = Network;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/transactions.js":
-/*!*******************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/transactions.js ***!
-  \*******************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/transactions.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/transactions.js ***!
+  \****************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const error_1 = __webpack_require__(/*! ./lib/error */ "./node_modules/arweave-js/dist/node/arweave/lib/error.js");
-const transaction_1 = __webpack_require__(/*! ./lib/transaction */ "./node_modules/arweave-js/dist/node/arweave/lib/transaction.js");
-const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave-js/dist/node/arweave/lib/utils.js");
+const error_1 = __webpack_require__(/*! ./lib/error */ "./node_modules/arweave/dist/node/arweave/lib/error.js");
+const transaction_1 = __webpack_require__(/*! ./lib/transaction */ "./node_modules/arweave/dist/node/arweave/lib/transaction.js");
+const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
 class Transactions {
     constructor(api, crypto) {
         this.api = api;
@@ -2877,7 +2895,7 @@ class Transactions {
     }
     get(id) {
         return this.api.get(`tx/${id}`).then(response => {
-            if (response.status == 200) {
+            if (response.status == 200 && response.data && response.data.id == id) {
                 return new transaction_1.Transaction(response.data);
             }
             if (response.status == 202) {
@@ -2889,6 +2907,7 @@ class Transactions {
             if (response.status == 410) {
                 new error_1.ArweaveError("TX_FAILED" /* TX_FAILED */);
             }
+            new error_1.ArweaveError("TX_INVALID" /* TX_INVALID */);
         });
     }
     getStatus(id) {
@@ -2906,6 +2925,22 @@ class Transactions {
         });
         return transaction;
     }
+    async verify(transaction) {
+        const signaturePayload = transaction.getSignatureData();
+        /**
+         * The transaction ID should be a SHA-256 hash of the raw signature bytes, so this needs
+         * to be recalculated from the signature and checked against the transaction ID.
+         */
+        const rawSignature = transaction.get('signature', { decode: true, string: false });
+        const expectedId = utils_1.ArweaveUtils.bufferTob64Url(await this.crypto.hash(rawSignature));
+        if (transaction.id !== expectedId) {
+            throw new Error(`Invalid transaction signature or ID! The transaction ID doesn't match the expected SHA-256 hash of the signature.`);
+        }
+        /**
+         * Now verify the signature is valid and signed by the owner wallet (owner field = originating wallet public key).
+        */
+        return this.crypto.verify(transaction.owner, signaturePayload, rawSignature);
+    }
     post(transaction) {
         return this.api.post(`tx`, transaction).then(response => {
             return response;
@@ -2917,17 +2952,17 @@ exports.Transactions = Transactions;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/arweave/wallets.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/arweave/wallets.js ***!
-  \**************************************************************/
+/***/ "./node_modules/arweave/dist/node/arweave/wallets.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/arweave/dist/node/arweave/wallets.js ***!
+  \***********************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave-js/dist/node/arweave/lib/utils.js");
+const utils_1 = __webpack_require__(/*! ./lib/utils */ "./node_modules/arweave/dist/node/arweave/lib/utils.js");
 class Wallets {
     constructor(api, crypto) {
         this.api = api;
@@ -2982,18 +3017,18 @@ exports.Wallets = Wallets;
 
 /***/ }),
 
-/***/ "./node_modules/arweave-js/dist/node/node.js":
-/*!***************************************************!*\
-  !*** ./node_modules/arweave-js/dist/node/node.js ***!
-  \***************************************************/
+/***/ "./node_modules/arweave/dist/node/node.js":
+/*!************************************************!*\
+  !*** ./node_modules/arweave/dist/node/node.js ***!
+  \************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const arweave_1 = __webpack_require__(/*! ./arweave/arweave */ "./node_modules/arweave-js/dist/node/arweave/arweave.js");
-const node_driver_1 = __webpack_require__(/*! ./arweave/lib/crypto/node-driver */ "./node_modules/arweave-js/dist/node/arweave/lib/crypto/node-driver.js");
+const arweave_1 = __webpack_require__(/*! ./arweave/arweave */ "./node_modules/arweave/dist/node/arweave/arweave.js");
+const node_driver_1 = __webpack_require__(/*! ./arweave/lib/crypto/node-driver */ "./node_modules/arweave/dist/node/arweave/lib/crypto/node-driver.js");
 function init(apiConfig) {
     return new arweave_1.Arweave({
         api: apiConfig,
@@ -4928,7 +4963,7 @@ module.exports = {
 /*! exports provided: _from, _id, _inBundle, _integrity, _location, _phantomChildren, _requested, _requiredBy, _resolved, _shasum, _spec, _where, author, browser, bugs, bundleDependencies, bundlesize, dependencies, deprecated, description, devDependencies, homepage, keywords, license, main, name, repository, scripts, typings, version, default */
 /***/ (function(module) {
 
-module.exports = {"_from":"axios@^0.18.0","_id":"axios@0.18.0","_inBundle":false,"_integrity":"sha1-MtU+SFHv3AoRmTts0AB4nXDAUQI=","_location":"/axios","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"axios@^0.18.0","name":"axios","escapedName":"axios","rawSpec":"^0.18.0","saveSpec":null,"fetchSpec":"^0.18.0"},"_requiredBy":["/arweave-js"],"_resolved":"http://registry.npmjs.org/axios/-/axios-0.18.0.tgz","_shasum":"32d53e4851efdc0a11993b6cd000789d70c05102","_spec":"axios@^0.18.0","_where":"/Users/kyle/repos/arweave-deploy/node_modules/arweave-js","author":{"name":"Matt Zabriskie"},"browser":{"./lib/adapters/http.js":"./lib/adapters/xhr.js"},"bugs":{"url":"https://github.com/axios/axios/issues"},"bundleDependencies":false,"bundlesize":[{"path":"./dist/axios.min.js","threshold":"5kB"}],"dependencies":{"follow-redirects":"^1.3.0","is-buffer":"^1.1.5"},"deprecated":false,"description":"Promise based HTTP client for the browser and node.js","devDependencies":{"bundlesize":"^0.5.7","coveralls":"^2.11.9","es6-promise":"^4.0.5","grunt":"^1.0.1","grunt-banner":"^0.6.0","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-nodeunit":"^1.0.0","grunt-contrib-watch":"^1.0.0","grunt-eslint":"^19.0.0","grunt-karma":"^2.0.0","grunt-ts":"^6.0.0-beta.3","grunt-webpack":"^1.0.18","istanbul-instrumenter-loader":"^1.0.0","jasmine-core":"^2.4.1","karma":"^1.3.0","karma-chrome-launcher":"^2.0.0","karma-coverage":"^1.0.0","karma-firefox-launcher":"^1.0.0","karma-jasmine":"^1.0.2","karma-jasmine-ajax":"^0.1.13","karma-opera-launcher":"^1.0.0","karma-safari-launcher":"^1.0.0","karma-sauce-launcher":"^1.1.0","karma-sinon":"^1.0.5","karma-sourcemap-loader":"^0.3.7","karma-webpack":"^1.7.0","load-grunt-tasks":"^3.5.2","minimist":"^1.2.0","sinon":"^1.17.4","typescript":"^2.0.3","url-search-params":"^0.6.1","webpack":"^1.13.1","webpack-dev-server":"^1.14.1"},"homepage":"https://github.com/axios/axios","keywords":["xhr","http","ajax","promise","node"],"license":"MIT","main":"index.js","name":"axios","repository":{"type":"git","url":"git+https://github.com/axios/axios.git"},"scripts":{"build":"NODE_ENV=production grunt build","coveralls":"cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js","examples":"node ./examples/server.js","postversion":"git push && git push --tags","preversion":"npm test","start":"node ./sandbox/server.js","test":"grunt test && bundlesize","version":"npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json"},"typings":"./index.d.ts","version":"0.18.0"};
+module.exports = {"_from":"axios@^0.18.0","_id":"axios@0.18.0","_inBundle":false,"_integrity":"sha1-MtU+SFHv3AoRmTts0AB4nXDAUQI=","_location":"/axios","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"axios@^0.18.0","name":"axios","escapedName":"axios","rawSpec":"^0.18.0","saveSpec":null,"fetchSpec":"^0.18.0"},"_requiredBy":["/arweave"],"_resolved":"https://registry.npmjs.org/axios/-/axios-0.18.0.tgz","_shasum":"32d53e4851efdc0a11993b6cd000789d70c05102","_spec":"axios@^0.18.0","_where":"/Users/kyle/repos/arweave-deploy/node_modules/arweave","author":{"name":"Matt Zabriskie"},"browser":{"./lib/adapters/http.js":"./lib/adapters/xhr.js"},"bugs":{"url":"https://github.com/axios/axios/issues"},"bundleDependencies":false,"bundlesize":[{"path":"./dist/axios.min.js","threshold":"5kB"}],"dependencies":{"follow-redirects":"^1.3.0","is-buffer":"^1.1.5"},"deprecated":false,"description":"Promise based HTTP client for the browser and node.js","devDependencies":{"bundlesize":"^0.5.7","coveralls":"^2.11.9","es6-promise":"^4.0.5","grunt":"^1.0.1","grunt-banner":"^0.6.0","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.0.0","grunt-contrib-nodeunit":"^1.0.0","grunt-contrib-watch":"^1.0.0","grunt-eslint":"^19.0.0","grunt-karma":"^2.0.0","grunt-ts":"^6.0.0-beta.3","grunt-webpack":"^1.0.18","istanbul-instrumenter-loader":"^1.0.0","jasmine-core":"^2.4.1","karma":"^1.3.0","karma-chrome-launcher":"^2.0.0","karma-coverage":"^1.0.0","karma-firefox-launcher":"^1.0.0","karma-jasmine":"^1.0.2","karma-jasmine-ajax":"^0.1.13","karma-opera-launcher":"^1.0.0","karma-safari-launcher":"^1.0.0","karma-sauce-launcher":"^1.1.0","karma-sinon":"^1.0.5","karma-sourcemap-loader":"^0.3.7","karma-webpack":"^1.7.0","load-grunt-tasks":"^3.5.2","minimist":"^1.2.0","sinon":"^1.17.4","typescript":"^2.0.3","url-search-params":"^0.6.1","webpack":"^1.13.1","webpack-dev-server":"^1.14.1"},"homepage":"https://github.com/axios/axios","keywords":["xhr","http","ajax","promise","node"],"license":"MIT","main":"index.js","name":"axios","repository":{"type":"git","url":"git+https://github.com/axios/axios.git"},"scripts":{"build":"NODE_ENV=production grunt build","coveralls":"cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js","examples":"node ./examples/server.js","postversion":"git push && git push --tags","preversion":"npm test","start":"node ./sandbox/server.js","test":"grunt test && bundlesize","version":"npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json"},"typings":"./index.d.ts","version":"0.18.0"};
 
 /***/ }),
 
@@ -14928,6 +14963,7 @@ module.exports = function (str) {
 /***/ (function(module, exports, __webpack_require__) {
 
 var url = __webpack_require__(/*! url */ "url");
+var URL = url.URL;
 var http = __webpack_require__(/*! http */ "http");
 var https = __webpack_require__(/*! https */ "https");
 var assert = __webpack_require__(/*! assert */ "assert");
@@ -14952,6 +14988,8 @@ function RedirectableRequest(options, responseCallback) {
   Writable.call(this);
   options.headers = options.headers || {};
   this._options = options;
+  this._ended = false;
+  this._ending = false;
   this._redirectCount = 0;
   this._redirects = [];
   this._requestBodyLength = 0;
@@ -14998,6 +15036,11 @@ RedirectableRequest.prototype = Object.create(Writable.prototype);
 
 // Writes buffered data to the current native request
 RedirectableRequest.prototype.write = function (data, encoding, callback) {
+  // Writing is not allowed if end has been called
+  if (this._ending) {
+    throw new Error("write after end");
+  }
+
   // Validate input and shift parameters if necessary
   if (!(typeof data === "string" || typeof data === "object" && ("length" in data))) {
     throw new Error("data should be a string, Buffer or Uint8Array");
@@ -15040,11 +15083,20 @@ RedirectableRequest.prototype.end = function (data, encoding, callback) {
     encoding = null;
   }
 
-  // Write data and end
-  var currentRequest = this._currentRequest;
-  this.write(data || "", encoding, function () {
-    currentRequest.end(null, null, callback);
-  });
+  // Write data if needed and end
+  if (!data) {
+    this._ended = this._ending = true;
+    this._currentRequest.end(null, null, callback);
+  }
+  else {
+    var self = this;
+    var currentRequest = this._currentRequest;
+    this.write(data, encoding, function () {
+      self._ended = true;
+      currentRequest.end(null, null, callback);
+    });
+    this._ending = true;
+  }
 };
 
 // Sets a header value on the current native request
@@ -15112,14 +15164,29 @@ RedirectableRequest.prototype._performRequest = function () {
   if (this._isRedirect) {
     // Write the request entity and end.
     var i = 0;
+    var self = this;
     var buffers = this._requestBodyBuffers;
-    (function writeNext() {
-      if (i < buffers.length) {
-        var buffer = buffers[i++];
-        request.write(buffer.data, buffer.encoding, writeNext);
-      }
-      else {
-        request.end();
+    (function writeNext(error) {
+      // Only write if this request has not been redirected yet
+      /* istanbul ignore else */
+      if (request === self._currentRequest) {
+        // Report any write errors
+        /* istanbul ignore if */
+        if (error) {
+          self.emit("error", error);
+        }
+        // Write the next buffer if there are still left
+        else if (i < buffers.length) {
+          var buffer = buffers[i++];
+          /* istanbul ignore else */
+          if (!request.finished) {
+            request.write(buffer.data, buffer.encoding, writeNext);
+          }
+        }
+        // End the request if `end` has been called on us
+        else if (self._ended) {
+          request.end();
+        }
       }
     }());
   }
@@ -15145,6 +15212,11 @@ RedirectableRequest.prototype._processResponse = function (response) {
   var location = response.headers.location;
   if (location && this._options.followRedirects !== false &&
       response.statusCode >= 300 && response.statusCode < 400) {
+    // Abort the current request
+    this._currentRequest.removeAllListeners();
+    this._currentRequest.on("error", noop);
+    this._currentRequest.abort();
+
     // RFC7231§6.4: A client SHOULD detect and intervene
     // in cyclical redirections (i.e., "infinite" redirection loops).
     if (++this._redirectCount > this._options.maxRedirects) {
@@ -15218,32 +15290,74 @@ function wrap(protocols) {
     var wrappedProtocol = exports[scheme] = Object.create(nativeProtocol);
 
     // Executes a request, following redirects
-    wrappedProtocol.request = function (options, callback) {
-      if (typeof options === "string") {
-        options = url.parse(options);
-        options.maxRedirects = exports.maxRedirects;
+    wrappedProtocol.request = function (input, options, callback) {
+      // Parse parameters
+      if (typeof input === "string") {
+        var urlStr = input;
+        try {
+          input = urlToOptions(new URL(urlStr));
+        }
+        catch (err) {
+          /* istanbul ignore next */
+          input = url.parse(urlStr);
+        }
+      }
+      else if (URL && (input instanceof URL)) {
+        input = urlToOptions(input);
       }
       else {
-        options = Object.assign({
-          protocol: protocol,
-          maxRedirects: exports.maxRedirects,
-          maxBodyLength: exports.maxBodyLength,
-        }, options);
+        callback = options;
+        options = input;
+        input = { protocol: protocol };
       }
+      if (typeof options === "function") {
+        callback = options;
+        options = null;
+      }
+
+      // Set defaults
+      options = Object.assign({
+        maxRedirects: exports.maxRedirects,
+        maxBodyLength: exports.maxBodyLength,
+      }, input, options);
       options.nativeProtocols = nativeProtocols;
+
       assert.equal(options.protocol, protocol, "protocol mismatch");
       debug("options", options);
       return new RedirectableRequest(options, callback);
     };
 
     // Executes a GET request, following redirects
-    wrappedProtocol.get = function (options, callback) {
-      var request = wrappedProtocol.request(options, callback);
+    wrappedProtocol.get = function (input, options, callback) {
+      var request = wrappedProtocol.request(input, options, callback);
       request.end();
       return request;
     };
   });
   return exports;
+}
+
+/* istanbul ignore next */
+function noop() { /* empty */ }
+
+// from https://github.com/nodejs/node/blob/master/lib/internal/url.js
+function urlToOptions(urlObject) {
+  var options = {
+    protocol: urlObject.protocol,
+    hostname: urlObject.hostname.startsWith("[") ?
+      /* istanbul ignore next */
+      urlObject.hostname.slice(1, -1) :
+      urlObject.hostname,
+    hash: urlObject.hash,
+    search: urlObject.search,
+    pathname: urlObject.pathname,
+    path: urlObject.pathname + urlObject.search,
+    href: urlObject.href,
+  };
+  if (urlObject.port !== "") {
+    options.port = Number(urlObject.port);
+  }
+  return options;
 }
 
 // Exports
@@ -16364,7 +16478,7 @@ function supportsColor(stream) {
 		return 2;
 	}
 
-	if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env.TERM)) {
+	if (/^screen|^xterm|^vt100|^rxvt|color|ansi|cygwin|linux/i.test(env.TERM)) {
 		return 1;
 	}
 
@@ -16436,7 +16550,7 @@ module.exports = function(module) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Arweave = __webpack_require__(/*! arweave-js/dist/node/node */ "./node_modules/arweave-js/dist/node/node.js");
+const Arweave = __webpack_require__(/*! arweave/dist/node/node */ "./node_modules/arweave/dist/node/node.js");
 const chalk_1 = __webpack_require__(/*! chalk */ "./node_modules/chalk/index.js");
 const cli = __webpack_require__(/*! commander */ "./node_modules/commander/index.js");
 const balance_1 = __webpack_require__(/*! ./commands/balance */ "./src/commands/balance.ts");
@@ -16445,7 +16559,7 @@ const inspect_wallet_1 = __webpack_require__(/*! ./commands/inspect-wallet */ ".
 const network_info_1 = __webpack_require__(/*! ./commands/network-info */ "./src/commands/network-info.ts");
 const status_1 = __webpack_require__(/*! ./commands/status */ "./src/commands/status.ts");
 const wallet_forget_1 = __webpack_require__(/*! ./commands/wallet-forget */ "./src/commands/wallet-forget.ts");
-const wallet_generare_1 = __webpack_require__(/*! ./commands/wallet-generare */ "./src/commands/wallet-generare.ts");
+const wallet_generate_1 = __webpack_require__(/*! ./commands/wallet-generate */ "./src/commands/wallet-generate.ts");
 const wallet_remember_1 = __webpack_require__(/*! ./commands/wallet-remember */ "./src/commands/wallet-remember.ts");
 const host = 'arweave.net';
 const port = 1984;
@@ -16459,7 +16573,7 @@ const commands = [
     new network_info_1.NetworkInfoCommand(arweave, cwd, log),
     new wallet_remember_1.WalletRememberCommand(arweave, cwd, log),
     new wallet_forget_1.WalletForgetCommand(arweave, cwd, log),
-    new wallet_generare_1.WalletGenerateCommand(arweave, cwd, log),
+    new wallet_generate_1.WalletGenerateCommand(arweave, cwd, log),
     new inspect_wallet_1.InspectWalletCommand(arweave, cwd, log),
 ];
 cli
@@ -16585,7 +16699,7 @@ class Command {
         if (!options || options.saved) {
             const rememberedAddress = await keys.recallKeyAddress();
             if (rememberedAddress) {
-                const rememberedKey = await keys.recallKey(await promptly.password(chalk_1.default.greenBright(`Enter your decryption passphrase for ${rememberedAddress}`)));
+                const rememberedKey = await keys.recallKey(await promptly.password(chalk_1.default.greenBright(`Enter your encryption passphrase to decrypt ${rememberedAddress}`)));
                 return rememberedKey;
             }
         }
@@ -16654,46 +16768,49 @@ const chalk_1 = __webpack_require__(/*! chalk */ "./node_modules/chalk/index.js"
 const file_1 = __webpack_require__(/*! ../lib/file */ "./src/lib/file.ts");
 const keys = __webpack_require__(/*! ../lib/keys */ "./src/lib/keys.ts");
 const mime = __webpack_require__(/*! mime */ "./node_modules/mime/index.js");
+const silo_1 = __webpack_require__(/*! ../lib/silo */ "./src/lib/silo.ts");
 class DeployCommand extends command_1.Command {
     constructor() {
         super(...arguments);
-        this.signature = 'deploy <file_path>';
-        this.description = 'Deploy a file';
+        this.signature = 'deploy <file_path> [silo_reference]';
+        this.description = 'Deploy a file (an optional Silo reference can also be specified)';
     }
-    async action(path) {
+    async action(path, siloDestination) {
         const file = new file_1.File(path, this.cwd);
         if (!await file.exists()) {
             throw new Error(`Failed to read file at path: "${path}"`);
         }
         const data = (await file.read()).toString();
         const bytes = (await file.info()).size;
-        let key = await this.getKey();
+        const key = await this.getKey();
         if (!key) {
             throw new Error(`Arweave key required, try running this command again with '--key-file path/to/key/file.json'`);
         }
         const address = await this.arweave.wallets.jwkToAddress(key);
         const balance = await this.arweave.wallets.getBalance(address);
-        const price = await this.arweave.transactions.getPrice(bytes);
-        const balanceAfter = this.arweave.ar.sub(balance, price);
         // The content-type tag value can be supplied by the user
         // this can be useful if the mime auto-detection fails for
         // whatever reason or the user wants to set another value.
         const type = this.context.contentType ? this.context.contentType : mime.getType(path);
-        const transaction = await this.arweave.createTransaction({
-            data: data,
-            reward: price
-        }, key);
+        // If a Silo destination is specified then we need to generate the transaction
+        // a bit differently as the contents will be encrypted using part of the siloDestination
+        // string, we also need to add an additional tag. Everything else is the same though.
+        const transaction = siloDestination ? await this.newSiloTransaction(key, data, siloDestination) : await this.newTransaction(key, data);
+        const balanceAfter = this.arweave.ar.sub(balance, transaction.reward);
         transaction.addTag('Content-Type', type);
         await this.arweave.transactions.sign(transaction, key);
         this.log(`File: ${path}`);
         this.log(`Type: ${type}`);
         this.log(`Size: ${file_1.File.bytesForHumans(bytes)}`);
         this.log(`Wallet address: ${address}`);
-        this.log(`Price: ${this.formatWinston(price)}`);
+        this.log(`Price: ${this.formatWinston(transaction.reward)}`);
         this.log(`Current balance: ${this.formatWinston(balance)}`);
         this.log(`Balance after uploading: ${this.formatWinston(balanceAfter)}`);
         this.log(``);
-        if (this.arweave.ar.isLessThan(balance, price)) {
+        console.log(transaction);
+        console.log(await this.arweave.transactions.verify(transaction));
+        return;
+        if (this.arweave.ar.isLessThan(balance, transaction.reward)) {
             throw new Error(`Insufficient balance`);
         }
         if (!this.context.forceSkipWarnings && keys.isMaybeKey(data)) {
@@ -16705,7 +16822,6 @@ class DeployCommand extends command_1.Command {
         }
         if (!this.context.forceSkipConfirmation) {
             const confirmed = await this.prompt(chalk_1.default.green(`Carefully check the above details are correct, then Type CONFIRM to complete this upload`));
-            this.log(``);
             if (confirmed !== 'CONFIRM') {
                 throw new Error(`User cancelled`);
             }
@@ -16716,8 +16832,7 @@ class DeployCommand extends command_1.Command {
          * bufferify the transaction for now to avoid a deprecation warning
          * at runtime being printed to the cli.
          */
-        // @ts-ignore
-        // const response = await arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
+        // const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
         // if (response.status != 200) {
         //     throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
         // }
@@ -16728,6 +16843,24 @@ class DeployCommand extends command_1.Command {
         this.log(``);
         this.log(`You can check it's status using 'arweave-deploy status ${transaction.id}'`);
         this.log(``);
+    }
+    async newTransaction(key, data) {
+        const price = await this.arweave.transactions.getPrice(data.length);
+        return this.arweave.createTransaction({
+            data: data,
+            reward: price
+        }, key);
+    }
+    async newSiloTransaction(key, data, siloDestination) {
+        const siloReference = new silo_1.SiloReference(siloDestination);
+        const encryptedData = keys.encrypt(Buffer.from(data), siloReference.getEncryptionKey()).toString();
+        const price = await this.arweave.transactions.getPrice(encryptedData.length);
+        const transaction = await this.arweave.createTransaction({
+            data: encryptedData,
+            reward: price
+        }, key);
+        transaction.addTag('Silo-Name', siloReference.getName());
+        return transaction;
     }
 }
 exports.DeployCommand = DeployCommand;
@@ -16759,7 +16892,7 @@ class InspectWalletCommand extends command_1.Command {
         const balance = await this.arweave.wallets.getBalance(address);
         this.log(JSON.stringify({
             address: address,
-            balance: balance,
+            balance: this.formatWinston(balance),
             last_transaction: lastTx,
         }, null, 4));
     }
@@ -16874,9 +17007,9 @@ exports.WalletForgetCommand = WalletForgetCommand;
 
 /***/ }),
 
-/***/ "./src/commands/wallet-generare.ts":
+/***/ "./src/commands/wallet-generate.ts":
 /*!*****************************************!*\
-  !*** ./src/commands/wallet-generare.ts ***!
+  !*** ./src/commands/wallet-generate.ts ***!
   \*****************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
@@ -16891,7 +17024,7 @@ class WalletGenerateCommand extends command_1.Command {
     constructor() {
         super(...arguments);
         this.signature = 'generate-wallet <output_file>';
-        this.description = 'Generate a new wallet key file';
+        this.description = 'Generate a key file for a new wallet';
     }
     async action(path) {
         const wallet = await this.arweave.wallets.generate();
@@ -17234,6 +17367,48 @@ async function loadFromFile(path, cwd) {
     }
 }
 exports.loadFromFile = loadFromFile;
+
+
+/***/ }),
+
+/***/ "./src/lib/silo.ts":
+/*!*************************!*\
+  !*** ./src/lib/silo.ts ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const crypto = __webpack_require__(/*! crypto */ "crypto");
+class SiloReference {
+    constructor(name) {
+        const parsed = name.match(/^([a-z0-9]+)\.([0-9]+)/i);
+        if (!parsed) {
+            throw new Error(`Invalid Silo name, must be a name in the format of [a-z0-9]+.[0-9]+, e.g. 'bubble.7'`);
+        }
+        const access = parsed[1];
+        const hashCount = Math.pow(2, parseInt(parsed[2]));
+        const digest = this.hash(access, hashCount);
+        this.access = digest.slice(0, 15);
+        this.decrypt = digest.slice(16, 31);
+    }
+    getName() {
+        return this.access.toString();
+    }
+    getEncryptionKey() {
+        return this.decrypt.toString();
+    }
+    hash(input, rounds) {
+        let digest = crypto.createHash('sha256').update(input).digest();
+        for (let count = 0; count < (rounds - 1); count++) {
+            digest = crypto.createHash('sha256').update(input).digest();
+        }
+        return digest;
+    }
+}
+exports.SiloReference = SiloReference;
 
 
 /***/ }),

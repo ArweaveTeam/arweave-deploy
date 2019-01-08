@@ -3,14 +3,18 @@ import chalk from 'chalk';
 import { File } from '../lib/file';
 import * as keys from '../lib/keys';
 import * as mime from 'mime';
+import { SiloReference } from '../lib/silo';
+import { JWKInterface } from 'arweave/dist/node/arweave/lib/Wallet';
+import { Transaction } from 'arweave/dist/node/arweave/lib/transaction';
 
 export class DeployCommand extends Command {
 
-    public signature = 'deploy <file_path>';
+    public signature = 'deploy <file_path> [silo_reference]';
 
-    public description = 'Deploy a file';
+    public description = 'Deploy a file (an optional Silo reference can also be specified)';
 
-    async action(path: string) {
+    async action(path: string, siloDestination: string) {
+
         const file = new File(path, this.cwd);
 
         if (!await file.exists()) {
@@ -21,7 +25,7 @@ export class DeployCommand extends Command {
 
         const bytes = (await file.info()).size;
 
-        let key = await this.getKey();
+        const key = await this.getKey();
 
         if (!key) {
             throw new Error(`Arweave key required, try running this command again with '--key-file path/to/key/file.json'`);
@@ -31,19 +35,17 @@ export class DeployCommand extends Command {
 
         const balance = await this.arweave.wallets.getBalance(address);
 
-        const price = await this.arweave.transactions.getPrice(bytes);
-
-        const balanceAfter = this.arweave.ar.sub(balance, price);
-
         // The content-type tag value can be supplied by the user
         // this can be useful if the mime auto-detection fails for
         // whatever reason or the user wants to set another value.
         const type = this.context.contentType ? this.context.contentType : mime.getType(path);
 
-        const transaction = await this.arweave.createTransaction({
-            data: data,
-            reward: price
-        }, key);
+        // If a Silo destination is specified then we need to generate the transaction
+        // a bit differently as the contents will be encrypted using part of the siloDestination
+        // string, we also need to add an additional tag. Everything else is the same though.
+        const transaction = siloDestination ? await this.newSiloTransaction(key, data, siloDestination) : await this.newTransaction(key, data);
+
+        const balanceAfter = this.arweave.ar.sub(balance, transaction.reward);
 
         transaction.addTag('Content-Type', type);
 
@@ -53,12 +55,17 @@ export class DeployCommand extends Command {
         this.log(`Type: ${type}`);
         this.log(`Size: ${File.bytesForHumans(bytes)}`);
         this.log(`Wallet address: ${address}`);
-        this.log(`Price: ${this.formatWinston(price)}`);
+        this.log(`Price: ${this.formatWinston(transaction.reward)}`);
         this.log(`Current balance: ${this.formatWinston(balance)}`);
         this.log(`Balance after uploading: ${this.formatWinston(balanceAfter)}`);
         this.log(``);
 
-        if (this.arweave.ar.isLessThan(balance, price)) {
+        console.log(transaction);
+        console.log(await this.arweave.transactions.verify(transaction));
+
+        return;
+
+        if (this.arweave.ar.isLessThan(balance, transaction.reward)) {
             throw new Error(`Insufficient balance`);
         }
 
@@ -81,6 +88,7 @@ export class DeployCommand extends Command {
             }
         }
 
+
         /**
          * Axios still haven't produced a release where the deprecated
          * buffer consructor issue has been fixed, so we need to manually
@@ -89,11 +97,11 @@ export class DeployCommand extends Command {
          */
 
 
-        const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
+        // const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
 
-        if (response.status != 200) {
-            throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
-        }
+        // if (response.status != 200) {
+        //     throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
+        // }
 
         this.log(`Your file is deploying! 🚀`);
         this.log(`Once your file is mined into a block it'll be available on the following URL`);
@@ -103,6 +111,37 @@ export class DeployCommand extends Command {
         this.log(`You can check it's status using 'arweave-deploy status ${transaction.id}'`);
         this.log(``);
 
+    }
+
+    private async newTransaction(key: JWKInterface, data: string): Promise<Transaction> {
+
+        const price = await this.arweave.transactions.getPrice(data.length);
+
+        return this.arweave.createTransaction({
+            data: data,
+            reward: price
+        }, key);
+    }
+
+    private async newSiloTransaction(key: JWKInterface, data: string, siloDestination: string): Promise<Transaction> {
+
+        const siloReference = new SiloReference(siloDestination);
+
+        const encryptedData = keys.encrypt(
+            Buffer.from(data),
+            siloReference.getEncryptionKey()
+        ).toString();
+
+        const price = await this.arweave.transactions.getPrice(encryptedData.length);
+
+        const transaction = await this.arweave.createTransaction({
+            data: encryptedData,
+            reward: price
+        }, key);
+
+        transaction.addTag('Silo-Name', siloReference.getName());
+
+        return transaction;
     }
 
 }
