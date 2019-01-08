@@ -7,7 +7,7 @@ export class InspectWalletCommand extends Command {
 
     public description = 'Inspect a key file';
 
-    async action (): Promise<void> {
+    async action(): Promise<void> {
 
         const key = await this.getKey();
 
@@ -19,7 +19,7 @@ export class InspectWalletCommand extends Command {
 
         this.log(JSON.stringify({
             address: address,
-            balance: balance,
+            balance: this.formatWinston(balance),
             last_transaction: lastTx,
         }, null, 4));
 

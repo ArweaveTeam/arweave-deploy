@@ -1,5 +1,5 @@
-import { Arweave } from "arweave-js/dist/node/arweave/arweave";
-import { JWKInterface } from "arweave-js/dist/node/arweave/lib/Wallet";
+import { Arweave } from "arweave/dist/node/arweave/arweave";
+import { JWKInterface } from "arweave/dist/node/arweave/lib/Wallet";
 import chalk from 'chalk';
 import * as commander from "commander";
 import * as promptly from 'promptly';
@@ -14,13 +14,13 @@ export abstract class Command {
 
     protected abstract description: string;
 
-    constructor(arweave: Arweave, cwd: string, log: any){
+    constructor(arweave: Arweave, cwd: string, log: any) {
         this.arweave = arweave;
         this.cwd = cwd;
         this.log = log ? log : console.log;
     }
 
-    setContext(context: commander.Command){
+    setContext(context: commander.Command) {
         this.context = context;
     }
 
@@ -29,19 +29,19 @@ export abstract class Command {
         return this.context.parent.winston ? value + ' Winston' : this.arweave.ar.winstonToAr(value) + ' AR';
     }
 
-    confirm(message: string): Promise<boolean>{
+    confirm(message: string): Promise<boolean> {
         return promptly.confirm(message);
     }
 
-    prompt(message: string): Promise<string>{
+    prompt(message: string): Promise<string> {
         return promptly.prompt(message);
     }
 
-    passwordPrompt(message: string): Promise<string>{
+    passwordPrompt(message: string): Promise<string> {
         return promptly.password(message);
     }
 
-    async getKey(options?: {inline?: true, file?: true, saved?: true}): Promise<JWKInterface> {
+    async getKey(options?: { inline?: true, file?: true, saved?: true }): Promise<JWKInterface> {
 
         if (!options || options.file) {
             if (this.context.parent.keyFile) {
@@ -54,15 +54,15 @@ export abstract class Command {
 
             if (rememberedAddress) {
                 const rememberedKey = await keys.recallKey(await promptly.password(
-                    chalk.greenBright(`Enter your decryption passphrase for ${rememberedAddress}`
-                )));
+                    chalk.greenBright(`Enter your encryption passphrase to decrypt ${rememberedAddress}`
+                    )));
 
                 return rememberedKey;
             }
         }
     }
 
-    async getKeyAddress(){
+    async getKeyAddress() {
         const keyFilePath = await this.context.parent.keyFile;
 
         if (keyFilePath) {

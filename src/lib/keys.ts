@@ -1,4 +1,4 @@
-import { JWKInterface } from "arweave-js/dist/node/arweave/lib/Wallet";
+import { JWKInterface } from "arweave/dist/node/arweave/lib/Wallet";
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -8,14 +8,14 @@ import { File } from "./file";
 
 export function validateKeyComponents(obj: any): void {
 
-    const expected = ['kty', 'n','e','d','p','q','dp','dq','qi'];
+    const expected = ['kty', 'n', 'e', 'd', 'p', 'q', 'dp', 'dq', 'qi'];
 
     expected.forEach(element => {
         if (obj.hasOwnProperty(element)) {
             if (typeof obj[element] !== 'string') {
                 throw new Error(`Invalid field type: ${element}, expected a string value, got ${typeof obj[element]}`);
             }
-        }else{
+        } else {
             throw new Error(`Arweave key missing required field: ${element}`);
         }
     });
@@ -46,7 +46,7 @@ export function validateKeyComponents(obj: any): void {
  */
 export function isMaybeKey(data: string): boolean {
     try {
-        const expected = ['kty', 'n','e','d','p','q','dp','dq','qi'];
+        const expected = ['kty', 'n', 'e', 'd', 'p', 'q', 'dp', 'dq', 'qi'];
 
         let decoded = JSON.parse(data);
 
@@ -66,7 +66,7 @@ export function isMaybeKey(data: string): boolean {
 }
 
 
-async function recall(): Promise<{address:string, encrypted:string}>{
+async function recall(): Promise<{ address: string, encrypted: string }> {
     const path = keyFilePath();
 
     const file = new File(path);
@@ -129,7 +129,7 @@ export async function forget(): Promise<void> {
     const path = keyFilePath();
 
     const file = new File(path);
-    
+
     await file.delete();
 }
 
@@ -142,7 +142,7 @@ function appDirectoryPath(): string {
     const dir = path.resolve(os.homedir(), '.arweave-deploy');
 
     if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, {recursive: true});
+        fs.mkdirSync(dir, { recursive: true });
     }
 
     // Will throw an exception if we can't read/write
@@ -151,7 +151,7 @@ function appDirectoryPath(): string {
     return dir;
 }
 
-function keyFilePath(): string{
+function keyFilePath(): string {
     return path.resolve(appDirectoryPath(), 'key.json');
 }
 
@@ -166,8 +166,8 @@ export function encrypt(data: Buffer, passphrase: string): Buffer {
 
     const cipher = crypto.createCipheriv(algorithm, key, iv);
 
-    const encrypted = Buffer.concat([iv,cipher.update(data),cipher.final()])
-    
+    const encrypted = Buffer.concat([iv, cipher.update(data), cipher.final()])
+
     return encrypted;
 }
 
@@ -178,10 +178,10 @@ export function decrypt(encrypted: Buffer, passphrase: string): Buffer {
 
         const key = crypto.pbkdf2Sync(passphrase, 'salt', 100000, 32, 'sha256')
 
-        const iv = encrypted.slice(0,16);
+        const iv = encrypted.slice(0, 16);
 
         const data = encrypted.slice(16);
-        
+
         const decipher = crypto.createDecipheriv(algorithm, key, iv);
 
         const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
@@ -193,7 +193,7 @@ export function decrypt(encrypted: Buffer, passphrase: string): Buffer {
 }
 
 
-export async function loadFromFile(path: string, cwd: string){
+export async function loadFromFile(path: string, cwd: string) {
 
     const file = new File(path, cwd);
 
@@ -204,24 +204,24 @@ export async function loadFromFile(path: string, cwd: string){
     let data = '';
 
     try {
-        data = (await file.read({encoding: 'utf-8'})).toString();
+        data = (await file.read({ encoding: 'utf-8' })).toString();
     } catch (error) {
         throw new Error(`Failed to read Arweave key file: ${error.message}`);
     }
 
-    if(!data){
+    if (!data) {
         throw new Error(`Failed to read Arweave key file`);
     }
 
     try {
-        const decoded =  JSON.parse(data);
+        const decoded = JSON.parse(data);
 
         if (typeof decoded !== 'object') {
             throw new Error('Failed to parse Arweave key file, the file format is invalid');
         }
-    
+
         validateKeyComponents(decoded);
-    
+
         return decoded;
     } catch (error) {
         throw new Error('Failed to parse Arweave key file, the file format is invalid');

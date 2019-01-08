@@ -6,7 +6,7 @@ export class WalletGenerateCommand extends Command{
 
     public signature = 'generate-wallet <output_file>';
 
-    public description = 'Generate a new wallet key file';
+    public description = 'Generate a key file for a new wallet';
 
     async action(path: string){
 

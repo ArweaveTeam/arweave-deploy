@@ -1,4 +1,4 @@
-import * as Arweave from 'arweave-js/dist/node/node';
+import * as Arweave from 'arweave/dist/node/node';
 import chalk from 'chalk';
 import * as cli from 'commander';
 import { BalanceCommand } from './commands/balance';
@@ -7,7 +7,7 @@ import { InspectWalletCommand } from './commands/inspect-wallet';
 import { NetworkInfoCommand } from './commands/network-info';
 import { StatusCommand } from './commands/status';
 import { WalletForgetCommand } from './commands/wallet-forget';
-import { WalletGenerateCommand } from './commands/wallet-generare';
+import { WalletGenerateCommand } from './commands/wallet-generate';
 import { WalletRememberCommand } from './commands/wallet-remember';
 
 
@@ -19,7 +19,7 @@ const cwd = process.cwd();
 
 const log = console.log;
 
-const arweave = Arweave.init({host: host, port: port, logging: false});
+const arweave = Arweave.init({ host: host, port: port, logging: false });
 
 const commands = [
     new DeployCommand(arweave, cwd, log),
@@ -52,7 +52,7 @@ cli
     })
 
 cli
-    .option('--key-file <key_file_path>', 'Path to an Arweave key file', (path: string) : string => {
+    .option('--key-file <key_file_path>', 'Path to an Arweave key file', (path: string): string => {
         return path;
     })
 
@@ -65,7 +65,7 @@ cli
     })
 
 
-commands.forEach( instance => {
+commands.forEach(instance => {
 
     const context = cli.command(instance.signature);
 
@@ -82,7 +82,7 @@ commands.forEach( instance => {
     instance.setContext(context);
 });
 
-function quit(exitcode = 0){
+function quit(exitcode = 0) {
     process.exit(exitcode);
 }
 
@@ -106,7 +106,7 @@ process
     });
 
 cli
-    .on('--help', function(){
+    .on('--help', function () {
         log('')
         log('Examples:');
         log('  arweave deploy index.html --key-file path/to/my/keyfile.json');
@@ -115,12 +115,12 @@ cli
         log('')
         log('More help:');
         log(chalk.cyan('  https://docs.arweave.org/developers/tools/arweave-deploy\n'));
-});
+    });
 
 // error on unknown commands
 cli.on('command:*', function () {
     cli.help();
-  });
+});
 
 if (!process.argv.slice(2).length) {
     cli.help();

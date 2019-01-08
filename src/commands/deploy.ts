@@ -4,13 +4,13 @@ import { File } from '../lib/file';
 import * as keys from '../lib/keys';
 import * as mime from 'mime';
 
-export class DeployCommand extends Command{
+export class DeployCommand extends Command {
 
     public signature = 'deploy <file_path>';
 
     public description = 'Deploy a file';
 
-    async action(path: string){
+    async action(path: string) {
         const file = new File(path, this.cwd);
 
         if (!await file.exists()) {
@@ -45,7 +45,6 @@ export class DeployCommand extends Command{
             reward: price
         }, key);
 
-
         transaction.addTag('Content-Type', type);
 
         await this.arweave.transactions.sign(transaction, key);
@@ -73,10 +72,9 @@ export class DeployCommand extends Command{
             }
         }
 
-        if (!this.context.forceSkipConfirmation ) {
+        if (!this.context.forceSkipConfirmation) {
 
             const confirmed = await this.prompt(chalk.green(`Carefully check the above details are correct, then Type CONFIRM to complete this upload`));
-            this.log(``);
 
             if (confirmed !== 'CONFIRM') {
                 throw new Error(`User cancelled`);
@@ -90,12 +88,12 @@ export class DeployCommand extends Command{
          * at runtime being printed to the cli.
          */
 
-        // @ts-ignore
-        // const response = await arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
 
-        // if (response.status != 200) {
-        //     throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
-        // }
+        const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
+
+        if (response.status != 200) {
+            throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
+        }
 
         this.log(`Your file is deploying! 🚀`);
         this.log(`Once your file is mined into a block it'll be available on the following URL`);
@@ -104,6 +102,7 @@ export class DeployCommand extends Command{
         this.log(``);
         this.log(`You can check it's status using 'arweave-deploy status ${transaction.id}'`);
         this.log(``);
+
     }
 
 }
