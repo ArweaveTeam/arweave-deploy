@@ -1,12 +1,12 @@
 import { Command } from '../command';
 
-export class BalanceCommand extends Command{
+export class BalanceCommand extends Command {
 
     public signature = 'balance';
 
     public description = 'Get the balance of your wallet.';
 
-    async action (): Promise<void> {
+    async action(): Promise<void> {
 
         let address = await this.getKeyAddress();
 

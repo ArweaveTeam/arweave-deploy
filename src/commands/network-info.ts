@@ -1,16 +1,16 @@
 import { Command } from '../command';
 
-export class NetworkInfoCommand extends Command{
+export class NetworkInfoCommand extends Command {
 
     public signature = 'network-info';
 
     public description = 'Get current network info';
 
-    async action (transactionId: string, args: string, optional: string): Promise<void> {
+    async action(transactionId: string, args: string, optional: string): Promise<void> {
 
         const start = Date.now();
 
-        const response =  await this.arweave.network.getInfo();
+        const response = await this.arweave.network.getInfo();
 
         const end = Date.now();
 

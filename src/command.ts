@@ -5,6 +5,12 @@ import * as commander from "commander";
 import * as promptly from 'promptly';
 import * as keys from './lib/keys';
 
+interface option {
+    signature: string
+    description: string,
+    action?: Function
+}
+
 export abstract class Command {
 
     protected arweave: Arweave;
@@ -13,11 +19,26 @@ export abstract class Command {
     protected cwd: string;
 
     protected abstract description: string;
+    protected abstract signature: string;
+
+    protected options: option[] = [];
 
     constructor(arweave: Arweave, cwd: string, log: any) {
         this.arweave = arweave;
         this.cwd = cwd;
         this.log = log ? log : console.log;
+    }
+
+    getSignature(): string {
+        return this.signature;
+    }
+
+    getDescription(): string {
+        return this.description;
+    }
+
+    getOptions(): option[] {
+        return this.options;
     }
 
     setContext(context: commander.Command) {

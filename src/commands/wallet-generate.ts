@@ -2,15 +2,15 @@ import { Command } from '../command';
 import chalk from 'chalk';
 import { File } from '../lib/file';
 
-export class WalletGenerateCommand extends Command{
+export class WalletGenerateCommand extends Command {
 
     public signature = 'generate-wallet <output_file>';
 
     public description = 'Generate a key file for a new wallet';
 
-    async action(path: string){
+    async action(path: string) {
 
-        const wallet =  await this.arweave.wallets.generate();
+        const wallet = await this.arweave.wallets.generate();
         const address = await this.arweave.wallets.jwkToAddress(wallet);
 
         const file = new File(path ? path : `arweave-keyfile-${address}.json`, this.cwd);

@@ -3,17 +3,51 @@ import chalk from 'chalk';
 import { File } from '../lib/file';
 import * as keys from '../lib/keys';
 import * as mime from 'mime';
-import { SiloReference } from '../lib/silo';
 import { JWKInterface } from 'arweave/dist/node/arweave/lib/wallet';
 import { Transaction } from 'arweave/dist/node/arweave/lib/transaction';
+import * as crypto from 'crypto';
+
+declare var __VERSION__: string;
 
 export class DeployCommand extends Command {
 
-    public signature = 'deploy <file_path> [silo_reference]';
+    public signature = 'deploy <file_path>';
 
     public description = 'Deploy a file (an optional Silo reference can also be specified)';
 
-    async action(path: string, siloDestination: string) {
+    public options = [
+        {
+            signature: '--silo-publish <silo_uri>',
+            description: 'Define a Silo URI and publish the transaction on Silo',
+            action: (value: string) => {
+                if (value.match(/[a-z0-9-_]+\.[0-9]+/i)) {
+                    return value;
+                }
+                throw new Error('--silo-publish: Silo URIs can only contain letters, numbers, dashes and underscores, followed by dot and a number. E.g. My-silo-thing.2');
+            }
+        },
+        {
+            signature: '--content-type <mime_type>',
+            description: 'Set the data content type manually',
+            action: (value: string): string => {
+                if (value.match(/[a-z0-9-_]+\/[a-z0-9-_]+/i)) {
+                    return value;
+                }
+                throw new Error('--content-type: Invalid content-type, must be a valid mime type in the format of */*, e.g. text/html');
+            }
+        },
+        {
+            signature: '--force-skip-confirmation',
+            description: 'Skip warnings, confirmations, and force upload',
+        },
+        {
+            signature: '--force-skip-warnings',
+            description: 'Skip warnings and disable safety checks',
+        }
+    ];
+
+
+    async action(path: string) {
 
         const file = new File(path, this.cwd);
 
@@ -43,27 +77,40 @@ export class DeployCommand extends Command {
         // If a Silo destination is specified then we need to generate the transaction
         // a bit differently as the contents will be encrypted using part of the siloDestination
         // string, we also need to add an additional tag. Everything else is the same though.
-        const transaction = siloDestination ? await this.newSiloTransaction(key, data, siloDestination) : await this.newTransaction(key, data);
+        const transaction = this.context.siloPublish ? await this.newSiloTransaction(key, data, this.context.siloPublish) : await this.newTransaction(key, data);
 
         const balanceAfter = this.arweave.ar.sub(balance, transaction.reward);
 
         transaction.addTag('Content-Type', type);
 
+        transaction.addTag('User-Agent', `ArweaveDeploy/${__VERSION__}`);
+
+        transaction.addTag('Silo-Version', `0.1.0`);
+
+
         await this.arweave.transactions.sign(transaction, key);
+
+        if (!await this.arweave.transactions.verify(transaction)) {
+
+            throw new Error(`Failed to verify transaction`);
+        }
 
         this.log(`File: ${path}`);
         this.log(`Type: ${type}`);
         this.log(`Size: ${File.bytesForHumans(bytes)}`);
+        this.log(``);
         this.log(`Wallet address: ${address}`);
         this.log(`Price: ${this.formatWinston(transaction.reward)}`);
         this.log(`Current balance: ${this.formatWinston(balance)}`);
         this.log(`Balance after uploading: ${this.formatWinston(balanceAfter)}`);
         this.log(``);
+        this.log(`Transaction ID: ${transaction.id}`);
+        this.log(``);
 
-        console.log(transaction);
-        console.log(await this.arweave.transactions.verify(transaction));
-
-        return;
+        if (this.context.siloPublish) {
+            this.log(`Silo URI: ${this.context.siloPublish}`);
+            this.log(``);
+        }
 
         if (this.arweave.ar.isLessThan(balance, transaction.reward)) {
             throw new Error(`Insufficient balance`);
@@ -95,13 +142,11 @@ export class DeployCommand extends Command {
          * bufferify the transaction for now to avoid a deprecation warning
          * at runtime being printed to the cli.
          */
+        const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
 
-
-        // const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
-
-        // if (response.status != 200) {
-        //     throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
-        // }
+        if (response.status != 200) {
+            throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
+        }
 
         this.log(`Your file is deploying! 🚀`);
         this.log(`Once your file is mined into a block it'll be available on the following URL`);
@@ -114,34 +159,15 @@ export class DeployCommand extends Command {
     }
 
     private async newTransaction(key: JWKInterface, data: string): Promise<Transaction> {
-
-        const price = await this.arweave.transactions.getPrice(data.length);
-
         return this.arweave.createTransaction({
-            data: data,
-            reward: price
+            data: data
         }, key);
     }
 
-    private async newSiloTransaction(key: JWKInterface, data: string, siloDestination: string): Promise<Transaction> {
-
-        const siloReference = new SiloReference(siloDestination);
-
-        const encryptedData = keys.encrypt(
-            Buffer.from(data),
-            siloReference.getEncryptionKey()
-        ).toString();
-
-        const price = await this.arweave.transactions.getPrice(encryptedData.length);
-
-        const transaction = await this.arweave.createTransaction({
-            data: encryptedData,
-            reward: price
-        }, key);
-
-        transaction.addTag('Silo-Name', siloReference.getName());
-
-        return transaction;
+    private async newSiloTransaction(key: JWKInterface, data: string, siloURI: string): Promise<Transaction> {
+        return this.arweave.createSiloTransaction({
+            data: data
+        }, key, siloURI);
     }
 
 }

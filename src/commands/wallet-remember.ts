@@ -2,15 +2,15 @@ import * as keys from '../lib/keys';
 import { Command } from '../command';
 import chalk from 'chalk';
 
-export class WalletRememberCommand extends Command{
+export class WalletRememberCommand extends Command {
 
     public signature = 'remember-wallet';
 
     public description = 'Save a wallet and use it as your default instead of using --key-file key.json';
 
-    async action(){
+    async action() {
 
-        const key = await this.getKey({inline: true, file: true});
+        const key = await this.getKey({ inline: true, file: true });
 
         if (!key) {
             throw new Error('Key required, use --key-file key.json');

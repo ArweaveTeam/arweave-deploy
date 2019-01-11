@@ -11,6 +11,7 @@ import { WalletGenerateCommand } from './commands/wallet-generate';
 import { WalletRememberCommand } from './commands/wallet-remember';
 
 
+
 const host = 'arweave.net';
 
 const port = 1984;
@@ -36,12 +37,6 @@ cli
     .option('--winston', 'Display winston values instead of AR')
 
 cli
-    .option('--force-skip-confirmation', 'Skip warnings, confirmations, and force upload')
-
-cli
-    .option('--force-skip-warnings', 'Skip warnings and disable safety checks')
-
-cli
     .option('--host <hostname_or_ip>', 'Set the network hostname to use', (host: string): void => {
         arweave.api.getConfig().host = host;
     })
@@ -56,20 +51,18 @@ cli
         return path;
     })
 
-cli
-    .option('--content-type <mime_type>', 'Set the data content type manually', (value: string): string => {
-        if (value.match(/.+\/.+/)) {
-            return value;
-        }
-        throw new Error('--content-type: Invalid content-type, must be a valid mime type in the format of */*, e.g. text/html');
-    })
-
 
 commands.forEach(instance => {
 
-    const context = cli.command(instance.signature);
+    const context = cli.command(instance.getSignature());
 
-    context.description(instance.description);
+    context.description(instance.getDescription());
+
+    const options = instance.getOptions();
+
+    options.forEach((option) => {
+        context.option(option.signature, option.description, option.action)
+    });
 
     /**
      * We need to intercept and manually invoke the handler
