@@ -14,7 +14,7 @@
     "commander": "^2.19.0",
     "mime": "^2.4.0",
     "mocha": "^5.2.0",
-    "nexe": "^2.0.0-rc.34",
+    "nexe": "^3.0.0-beta.10",
     "promptly": "^3.0.3",
     "ts-loader": "^5.3.3",
     "ts-node": "^7.0.1",
