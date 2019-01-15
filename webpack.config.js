@@ -1,8 +1,11 @@
 const path = require('path');
 const webpack = require('webpack');
+const merge = require('webpack-merge');
+const Compiler = require('./compiler');
 
-module.exports = {
-    name: 'node',
+const config = [];
+
+config.common = {
     entry: './src/app.ts',
     mode: 'development',
     target: 'node',
@@ -23,10 +26,6 @@ module.exports = {
         contentBase: './dist'
     },
     plugins: [
-        new webpack.BannerPlugin({
-            banner: '#!/usr/bin/env node',
-            raw: true
-        }),
         new webpack.DefinePlugin({
             __VERSION__: JSON.stringify(require("./package.json").version)
         })
@@ -35,4 +34,27 @@ module.exports = {
         filename: 'arweave',
         path: path.resolve(__dirname, 'dist')
     }
-};
+}
+
+config.build = merge(config.common, {
+    name: 'build',
+    plugins: [
+        new webpack.BannerPlugin({
+            banner: '#!/usr/bin/env node',
+            raw: true
+        })
+    ]
+});
+
+config.package = merge(config.common, {
+    name: 'package',
+    plugins: [
+        new Compiler(path.resolve(__dirname, 'dist/.build/arweave.js'))
+    ],
+    output: {
+        filename: 'arweave.js',
+        path: path.resolve(__dirname, 'dist/.build')
+    }
+});
+
+module.exports = [config.build, config.package];

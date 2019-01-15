@@ -20,7 +20,7 @@ const cwd = process.cwd();
 
 const log = console.log;
 
-const arweave = Arweave.init({ host: host, port: port, logging: false });
+const arweave = Arweave.init({ host: host, port: port, logging: true });
 
 const commands = [
     new DeployCommand(arweave, cwd, log),

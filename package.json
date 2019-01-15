@@ -9,30 +9,31 @@
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.18",
     "@types/promptly": "^1.1.28",
-    "arweave": "^1.1.2",
+    "arweave": "^1.1.6",
     "chai": "^4.2.0",
     "commander": "^2.19.0",
     "mime": "^2.4.0",
     "mocha": "^5.2.0",
-    "pkg": "^4.3.5",
+    "nexe": "^2.0.0-rc.34",
     "promptly": "^3.0.3",
     "ts-loader": "^5.3.3",
     "ts-node": "^7.0.1",
     "typescript": "^3.1.6",
-    "webpack": "^4.28.1",
+    "webpack": "^4.28.4",
     "webpack-bundle-analyzer": "^3.0.3",
-    "webpack-cli": "^3.2.1"
+    "webpack-cli": "^3.2.1",
+    "webpack-merge": "^4.2.1"
   },
   "scripts": {
-    "build": "npx webpack && chmod +x dist/arweave",
-    "package": "npx webpack && chmod +x dist/arweave && npx pkg dist/arweave --targets node10-linux-x64 --out-path dist/bin/linux && npx pkg dist/arweave --targets node10-macos-x64 --out-path dist/bin/macos && npx pkg dist/arweave --targets node10-win-x64 --out-path dist/bin/windows",
+    "build": "npx webpack --config-name build && chmod +x dist/arweave",
+    "package": "npx webpack --config-name package",
     "test": "mocha --require ts-node/register test/*.ts"
   },
   "bin": {
     "arweave": "dist/arweave"
   },
   "targets": {
-    "node": "8.11"
+    "node": "10.15"
   },
   "repository": {
     "type": "git",

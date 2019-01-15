@@ -6,18 +6,18 @@ export class File {
     protected path: string
     protected base: string
 
-	constructor(path: string, base?: string) {
+    constructor(path: string, base?: string) {
         this.path = path;
         this.base = base;
     }
 
-    public getPath(){
+    public getPath() {
         return this.base ? path.resolve(this.base, this.path) : this.path;
     }
 
     public read(options?: { encoding?: string; flag?: string; }): Promise<string | Buffer> {
         return new Promise((resolve, reject) => {
-            fs.readFile(this.getPath(), options, (error: Error, data: string | Buffer ) => {
+            fs.readFile(this.getPath(), options, (error: Error, data: string | Buffer) => {
                 if (error) {
                     reject(error)
                 }
@@ -26,7 +26,7 @@ export class File {
         });
     }
 
-    public write (data: Buffer, options?: object): Promise<void> {
+    public write(data: Buffer, options?: object): Promise<void> {
         return new Promise((resolve, reject) => {
             fs.writeFile(this.getPath(), data, options, (error: Error) => {
                 if (error) {
@@ -71,9 +71,9 @@ export class File {
         const sizes = [
             'Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB'
         ];
-    
+
         let output;
-    
+
         sizes.forEach((unit, id) => {
             const s = Math.pow(1024, id);
             let fixed = '';
@@ -85,11 +85,11 @@ export class File {
                 output = `${fixed} ${unit}`;
             }
         });
-    
+
         if (!output) {
             `0 Bytes`;
         }
-    
+
         return output;
     }
 

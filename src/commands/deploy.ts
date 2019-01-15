@@ -6,6 +6,7 @@ import * as mime from 'mime';
 import { JWKInterface } from 'arweave/dist/node/arweave/lib/wallet';
 import { Transaction } from 'arweave/dist/node/arweave/lib/transaction';
 import * as crypto from 'crypto';
+import { ArweaveUtils } from 'arweave/dist/node/arweave/lib/utils';
 
 declare var __VERSION__: string;
 
@@ -85,9 +86,6 @@ export class DeployCommand extends Command {
 
         transaction.addTag('User-Agent', `ArweaveDeploy/${__VERSION__}`);
 
-        transaction.addTag('Silo-Version', `0.1.0`);
-
-
         await this.arweave.transactions.sign(transaction, key);
 
         if (!await this.arweave.transactions.verify(transaction)) {
@@ -95,9 +93,19 @@ export class DeployCommand extends Command {
             throw new Error(`Failed to verify transaction`);
         }
 
+        const tags = transaction.tags.map((tag) => {
+            const decoded = {
+                name: tag.get('name', { decode: true, string: true }),
+                value: tag.get('value', { decode: true, string: true }),
+            };
+
+            return `${decoded.name}: ${decoded.value}`;
+        }).join(', ');
+
         this.log(`File: ${path}`);
         this.log(`Type: ${type}`);
-        this.log(`Size: ${File.bytesForHumans(bytes)}`);
+        this.log(`Size: ${File.bytesForHumans(transaction.get('data', { decode: true, string: false }).byteLength)}`);
+        this.log(`Tags: ${tags}`);
         this.log(``);
         this.log(`Wallet address: ${address}`);
         this.log(`Price: ${this.formatWinston(transaction.reward)}`);
@@ -135,14 +143,13 @@ export class DeployCommand extends Command {
             }
         }
 
-
         /**
          * Axios still haven't produced a release where the deprecated
          * buffer consructor issue has been fixed, so we need to manually
          * bufferify the transaction for now to avoid a deprecation warning
          * at runtime being printed to the cli.
          */
-        const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction)));
+        const response = await this.arweave.transactions.post(Buffer.from(JSON.stringify(transaction), 'utf8'));
 
         if (response.status != 200) {
             throw new Error(`Failed to submit transaction, status ${response.status} - ${response.data}`);
@@ -166,8 +173,9 @@ export class DeployCommand extends Command {
 
     private async newSiloTransaction(key: JWKInterface, data: string, siloURI: string): Promise<Transaction> {
         return this.arweave.createSiloTransaction({
-            data: data
+            data: data,
         }, key, siloURI);
+
     }
 
 }
