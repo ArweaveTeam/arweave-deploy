@@ -70,6 +70,12 @@ commands.forEach(instance => {
      */
     context.action((...args) => {
         instance.action.apply(instance, [...args])
+        .then(()=>{
+            quit(0);
+        })
+        .catch(()=>{
+            quit(1);
+        });
     });
 
     instance.setContext(context);

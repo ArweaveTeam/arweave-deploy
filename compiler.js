@@ -33,13 +33,22 @@ module.exports = class Compiler {
                     output: path.resolve(__dirname, './dist/linux/arweave'),
                     build: false,
                     targets: [
-                        { version: '10.15.0', platform: 'linux', arch: 'x86' },
+                        { version: '10.15.0', platform: 'linux', arch: 'x64' },
                     ]
                 }));
 
                 builds.push(compile({
                     input: this.path,
-                    output: path.resolve(__dirname, './dist/windows/arweave.exe'),
+                    output: path.resolve(__dirname, './dist/windows/arweave-x64.exe'),
+                    build: false,
+                    targets: [
+                        { version: '10.15.0', platform: 'windows', arch: 'x64' },
+                    ]
+                }));
+
+                builds.push(compile({
+                    input: this.path,
+                    output: path.resolve(__dirname, './dist/windows/arweave-x86.exe'),
                     build: false,
                     targets: [
                         { version: '10.15.0', platform: 'windows', arch: 'x86' },
