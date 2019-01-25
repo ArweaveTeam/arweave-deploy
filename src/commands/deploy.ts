@@ -58,8 +58,6 @@ export class DeployCommand extends Command {
 
         const data = (await file.read()).toString();
 
-        const bytes = (await file.info()).size;
-
         const key = await this.getKey();
 
         if (!key) {

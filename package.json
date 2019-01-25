@@ -1,6 +1,6 @@
 {
   "name": "arweave-deploy",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "arweave-deploy",
   "main": "dist/arweave",
   "devDependencies": {
@@ -9,7 +9,7 @@
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.18",
     "@types/promptly": "^1.1.28",
-    "arweave": "^1.1.6",
+    "arweave": "^1.1.7",
     "chai": "^4.2.0",
     "commander": "^2.19.0",
     "mime": "^2.4.0",
