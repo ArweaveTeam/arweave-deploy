@@ -10,6 +10,8 @@ import { WalletForgetCommand } from './commands/wallet-forget';
 import { WalletGenerateCommand } from './commands/wallet-generate';
 import { WalletRememberCommand } from './commands/wallet-remember';
 
+import { logo } from './ascii';
+
 declare var __VERSION__: string;
 
 const cwd = process.cwd();
@@ -19,6 +21,8 @@ const log = console.log;
 const arweave = Arweave.init({
     host: 'arweave.net',
     port: 80,
+    protocol: 'http',
+    timeout: 20000,
     logging: false,
     logger: log
 });
@@ -35,9 +39,13 @@ const commands = [
 ];
 
 cli.option('-v --version', 'Show the version number', (): void => {
-    log(__VERSION__);
+    log(__VERSION__ + ' (BETA)');
     quit(0);
 });
+
+cli.option('--protocol <protocol>', 'Set the protocol to use (http or https)', (protocol: string): void => {
+    arweave.api.getConfig().protocol = protocol;
+})
 
 cli.option('--host <hostname_or_ip>', 'Set the network hostname to use', (host: string): void => {
     arweave.api.getConfig().host = host;
@@ -93,8 +101,10 @@ commands.forEach(instance => {
         })
         .catch((error: any)=>{
             log(chalk.redBright(error.message));
-            log(chalk.redBright(''));
-            log(error.stack);
+            if (cli.debug && error.stack) {
+                log(chalk.redBright(''));
+                log(error.stack);
+            }
             quit(1);
         });
     });
@@ -111,15 +121,19 @@ function quit(exitcode = 0) {
  */
 process.on('uncaughtException', function (error: Error) {
     log(chalk.redBright(error.message));
-    log(chalk.redBright(''));
-    log(error.stack);
+    if (cli.debug && error.stack) {
+        log(chalk.redBright(''));
+        log(error.stack);
+    }
     quit(1);
 });
 
 process.on('unhandledRejection', (reason, p) => {
     log(chalk.redBright(reason));
-    log(chalk.redBright(''));
-    log(reason.stack);
+    if (cli.debug && reason.stack) {
+        log(chalk.redBright(''));
+        log(reason.stack);
+    }
     quit(1);
 });
 
@@ -140,6 +154,7 @@ cli.on('command:*', function () {
 });
 
 if (!process.argv.slice(2).length) {
+    log(chalk.cyan(logo()));
     cli.help();
 }
 

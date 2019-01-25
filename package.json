@@ -1,6 +1,6 @@
 {
   "name": "arweave-deploy",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "arweave-deploy",
   "main": "dist/arweave",
   "devDependencies": {

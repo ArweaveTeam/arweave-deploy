@@ -73,6 +73,10 @@ export class DeployCommand extends Command {
         // whatever reason or the user wants to set another value.
         const type = this.context.contentType ? this.context.contentType : mime.getType(path);
 
+        if (!type.match('^text/.*$')) {
+            throw new Error(`Detected content type: ${type}\nBETA NOTICE: text/* content types are currently supported, more content types will be supported in future releases.`);
+        }
+
         // If a Silo destination is specified then we need to generate the transaction
         // a bit differently as the contents will be encrypted using part of the siloDestination
         // string, we also need to add an additional tag. Everything else is the same though.
