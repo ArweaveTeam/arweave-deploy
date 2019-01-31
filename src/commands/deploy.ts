@@ -1,12 +1,10 @@
-import { Command } from '../command';
+import { Transaction } from 'arweave/dist/node/arweave/lib/transaction';
+import { JWKInterface } from 'arweave/dist/node/arweave/lib/wallet';
 import chalk from 'chalk';
+import * as mime from 'mime';
+import { Command } from '../command';
 import { File } from '../lib/file';
 import * as keys from '../lib/keys';
-import * as mime from 'mime';
-import { JWKInterface } from 'arweave/dist/node/arweave/lib/wallet';
-import { Transaction } from 'arweave/dist/node/arweave/lib/transaction';
-import * as crypto from 'crypto';
-import { ArweaveUtils } from 'arweave/dist/node/arweave/lib/utils';
 
 declare var __VERSION__: string;
 
@@ -47,7 +45,6 @@ export class DeployCommand extends Command {
         }
     ];
 
-
     async action(path: string) {
 
         const file = new File(path, this.cwd);
@@ -56,7 +53,7 @@ export class DeployCommand extends Command {
             throw new Error(`Failed to read file at path: "${path}"`);
         }
 
-        const data = (await file.read()).toString();
+        const data = await file.read();
 
         const key = await this.getKey();
 
@@ -126,7 +123,7 @@ export class DeployCommand extends Command {
             throw new Error(`Insufficient balance`);
         }
 
-        if (!this.context.forceSkipWarnings && keys.isMaybeKey(data)) {
+        if (!this.context.forceSkipWarnings && keys.isMaybeKey(data.toString())) {
 
             let confirmed = await this.confirm(chalk.redBright(`The data you're uploading looks like it might be a key file, are you sure you want to continue? Y/N`));
             this.log(``);
@@ -162,18 +159,18 @@ export class DeployCommand extends Command {
         this.log(``);
         this.log(chalk.cyanBright(`http://arweave.net/${transaction.id}`));
         this.log(``);
-        this.log(`You can check it's status using 'arweave-deploy status ${transaction.id}'`);
+        this.log(`You can check it's status using 'arweave status ${transaction.id}'`);
         this.log(``);
 
     }
 
-    private async newTransaction(key: JWKInterface, data: string): Promise<Transaction> {
+    private async newTransaction(key: JWKInterface, data: string | Buffer ): Promise<Transaction> {
         return this.arweave.createTransaction({
             data: data
         }, key);
     }
 
-    private async newSiloTransaction(key: JWKInterface, data: string, siloURI: string): Promise<Transaction> {
+    private async newSiloTransaction(key: JWKInterface, data: string | Buffer, siloURI: string): Promise<Transaction> {
         return this.arweave.createSiloTransaction({
             data: data,
         }, key, siloURI);

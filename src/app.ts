@@ -55,7 +55,7 @@ cli.option('--port <port_number>', 'Set the network port to use', (port: string)
     arweave.api.getConfig().port = port;
 })
 
-cli.option('--timeout <milliseconds>', 'Set the network hostname to use', (timeout: string): void => {
+cli.option('--timeout <milliseconds>', 'Set the network request timeout', (timeout: string): void => {
     if (!Number(timeout)) {
         throw new Error('Invalid --timeout option, expected integer');
     }

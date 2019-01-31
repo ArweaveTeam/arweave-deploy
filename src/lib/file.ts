@@ -11,17 +11,33 @@ export class File {
         this.base = base;
     }
 
+    public getBase(){
+        return this.base;
+    }
+
     public getPath() {
         return this.base ? path.resolve(this.base, this.path) : this.path;
     }
 
-    public read(options?: { encoding?: string; flag?: string; }): Promise<string | Buffer> {
+    public getDirectory() {
+        return path.dirname(this.getPath());
+    }
+
+    public read(options?: { encoding?: string; flag?: string; }): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             fs.readFile(this.getPath(), options, (error: Error, data: string | Buffer) => {
                 if (error) {
                     reject(error)
                 }
-                resolve(data);
+                if (typeof data == 'string') {
+                    resolve(Buffer.from(data));
+                }
+
+                if (data instanceof Buffer) {
+                    resolve(data);
+                }
+
+                new Error('Unexpected file type, failed to read.');
             })
         });
     }
