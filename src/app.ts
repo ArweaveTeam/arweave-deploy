@@ -1,6 +1,6 @@
-import * as Arweave from 'arweave/dist/node/node';
+import * as Arweave from 'arweave/node';
 import chalk from 'chalk';
-import * as cli from 'commander';
+import { Command  } from 'commander';
 import { BalanceCommand } from './commands/balance';
 import { DeployCommand } from './commands/deploy';
 import { InspectWalletCommand } from './commands/inspect-wallet';
@@ -37,6 +37,8 @@ const commands = [
     new WalletGenerateCommand(arweave, cwd, log),
     new InspectWalletCommand(arweave, cwd, log),
 ];
+
+const cli = new Command;
 
 cli.option('-v --version', 'Show the version number', (): void => {
     log(__VERSION__ + ' (BETA)');
@@ -103,7 +105,7 @@ commands.forEach(instance => {
             log(chalk.redBright(error.message));
             if (cli.debug && error.stack) {
                 log(chalk.redBright(''));
-                log(error.stack);
+                log(chalk.redBright(error.stack));
             }
             quit(1);
         });

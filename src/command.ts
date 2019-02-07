@@ -1,5 +1,5 @@
-import { Arweave } from "arweave/dist/node/arweave/arweave";
-import { JWKInterface } from "arweave/dist/node/arweave/lib/wallet";
+import { Arweave } from "arweave/node/arweave/arweave";
+import { JWKInterface } from "arweave/node/arweave/lib/wallet";
 import chalk from 'chalk';
 import * as commander from "commander";
 import * as promptly from 'promptly';
@@ -29,6 +29,13 @@ export abstract class Command {
         this.log = log ? log : console.log;
     }
 
+    print(message: string|string[]){
+        if (Array.isArray(message)) {
+            return this.log(message.join('\n'));
+        }
+        return this.log(message);
+    }
+
     getSignature(): string {
         return this.signature;
     }
@@ -44,7 +51,6 @@ export abstract class Command {
     setContext(context: commander.Command) {
         this.context = context;
     }
-
 
     formatWinston(value: string): string {
         return this.context.parent.winston ? value + ' Winston' : this.arweave.ar.winstonToAr(value) + ' AR';
@@ -76,11 +82,13 @@ export abstract class Command {
             if (rememberedAddress) {
                 const rememberedKey = await keys.recallKey(await promptly.password(
                     chalk.greenBright(`Enter your encryption passphrase to decrypt ${rememberedAddress}`
-                    )));
+                )));
 
                 return rememberedKey;
             }
         }
+
+        throw new Error(`Arweave key required, try running this command again with '--key-file path/to/key/file.json'`);
     }
 
     async getKeyAddress() {

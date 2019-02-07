@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as mime from 'mime';
 
 export class File {
 
@@ -11,18 +12,41 @@ export class File {
         this.base = base;
     }
 
+    public getType(){
+        return mime.getType(this.getPath())
+    }
+
     public getBase(){
         return this.base;
     }
 
+    /**
+     * Get the fill absolute path for the file.
+     *
+     * @returns
+     * @memberof File
+     */
     public getPath() {
         return this.base ? path.resolve(this.base, this.path) : this.path;
     }
 
+    /**
+     * Get the directory that the file lives in.
+     *
+     * @returns
+     * @memberof File
+     */
     public getDirectory() {
         return path.dirname(this.getPath());
     }
 
+    /**
+     * Get the entire contents of the file as a buffer.
+     *
+     * @param {{ encoding?: string; flag?: string; }} [options]
+     * @returns {Promise<Buffer>}
+     * @memberof File
+     */
     public read(options?: { encoding?: string; flag?: string; }): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             fs.readFile(this.getPath(), options, (error: Error, data: string | Buffer) => {

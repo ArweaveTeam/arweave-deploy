@@ -1,4 +1,4 @@
-import { JWKInterface } from "arweave/dist/node/arweave/lib/wallet";
+import { JWKInterface } from "arweave/node/arweave/lib/wallet";
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
