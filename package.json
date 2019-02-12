@@ -1,6 +1,6 @@
 {
   "name": "arweave-deploy",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "arweave-deploy",
   "main": "dist/arweave",
   "devDependencies": {
@@ -11,8 +11,8 @@
     "@types/promptly": "^1.1.28",
     "arweave": "^1.1.8",
     "chai": "^4.2.0",
-    "cheerio": "^1.0.0-rc.2",
     "commander": "^2.19.0",
+    "inline-source": "^6.1.9",
     "mime": "^2.4.0",
     "mocha": "^5.2.0",
     "nexe": "^3.0.0-beta.10",
@@ -23,8 +23,7 @@
     "webpack": "^4.28.4",
     "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cli": "^3.2.1",
-    "webpack-merge": "^4.2.1",
-    "inline-source": "^6.1.9"
+    "webpack-merge": "^4.2.1"
   },
   "scripts": {
     "dev": "npx webpack --watch --config-name build && chmod +x dist/arweave",
