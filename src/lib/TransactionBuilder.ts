@@ -10,7 +10,9 @@ declare var __VERSION__: string;
 export interface PrepareTransactionOptions {
     contentType?: string;
     siloUri?: string;
-    package?: boolean
+    package?: boolean;
+    logger?: Function;
+    warnings?: boolean;
 }
 export interface ContentParserInterface {
     description: string;

@@ -66,7 +66,7 @@ export class File {
         });
     }
 
-    public write(data: Buffer, options?: object): Promise<void> {
+    public write(data: Buffer, options?: {encoding?: string}): Promise<void> {
         return new Promise((resolve, reject) => {
             fs.writeFile(this.getPath(), data, options, (error: Error) => {
                 if (error) {

@@ -1,7 +1,7 @@
 import { Transaction, Tag } from 'arweave/node/arweave/lib/transaction';
 import { Command } from '../command';
 import { File } from '../lib/file';
-import { buildTransaction, getParser } from '../lib/TransactionBuilder';
+import { buildTransaction, PrepareTransactionOptions } from '../lib/TransactionBuilder';
 import chalk from 'chalk';
 
 const REGEX_CONTENT_TYPE = /[a-z0-9-_]+\/[a-z0-9-_]+/i;
@@ -47,8 +47,8 @@ export class DeployCommand extends Command {
             description: 'Run through the deploy process without actually sending the transaction, an optional path can be specified to output the transaction object to.',
         },
         {
-            signature: '--disable-packaging',
-            description: 'Disable deployment packaging and optimisations.',
+            signature: '--package',
+            description: 'Package and optimise JS + CSS assets.',
         }
     ];
 
@@ -62,12 +62,16 @@ export class DeployCommand extends Command {
 
         const key = await this.getKey();
 
-        const options = {
+        const options: PrepareTransactionOptions = {
             siloUri: this.context.siloPublish,
-            // Default behaviour is to enable packaging if user doesn't specify
-            package: !this.context.disablePackaging,
-            warnings: !this.context.forceSkipWarnings
+            package: this.context.package,
+            // Default behaviour is to have warnings on so force it to true if the user doesn't specify
+            warnings: !this.context.forceSkipWarnings,
         };
+
+        if (this.context.debug) {
+            options.logger = this.print;
+        }
 
         const {transaction, parser} = await buildTransaction(this.arweave, file, key, options);
 
@@ -76,8 +80,6 @@ export class DeployCommand extends Command {
         const balance = await this.arweave.wallets.getBalance(address);
 
         const balanceAfter = this.arweave.ar.sub(balance, transaction.reward);
-
-        const tags = this.getTags(transaction);
 
         this.print([
             `\nFile\n`,
@@ -109,14 +111,14 @@ export class DeployCommand extends Command {
             // --dry-run can be a flag or a path to output the tx to
             if (typeof this.context.dryRun == 'string') {
                 const output = new File(this.context.dryRun, this.cwd);
-                await output.write(Buffer.from(JSON.stringify(transaction), 'utf8'));
+                await output.write(Buffer.from(JSON.stringify(transaction, null, 4), 'utf8'));
                 this.print(chalk.red(`Transaction data saved to: ${output.getPath()}`));
             }
             return;
         }
 
         if (this.arweave.ar.isLessThan(balance, transaction.reward)) {
-            throw new Error(`Insufficient balance: balance ${this.formatWinston(balance)}, fee: $${this.formatWinston(transaction.reward)}`);
+            throw new Error(`Insufficient balance: balance ${this.formatWinston(balance)}, fee: ${this.formatWinston(transaction.reward)}`);
         }
 
         if (!this.context.forceSkipConfirmation) {

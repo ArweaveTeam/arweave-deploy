@@ -12,7 +12,7 @@ export class StatusCommand extends Command {
 
 
         const codes = {
-            200: 'Deployed',
+            200: 'Confirmed',
             202: 'Pending',
             404: 'Not found'
         };

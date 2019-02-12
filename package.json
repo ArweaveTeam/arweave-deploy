@@ -27,6 +27,7 @@
     "inline-source": "^6.1.9"
   },
   "scripts": {
+    "dev": "npx webpack --watch --config-name build && chmod +x dist/arweave",
     "build": "npx webpack --config-name build && chmod +x dist/arweave",
     "package": "npx webpack --config-name package",
     "test": "mocha --require ts-node/register test/*.ts"

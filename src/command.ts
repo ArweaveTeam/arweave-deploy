@@ -68,7 +68,11 @@ export abstract class Command {
         return promptly.password(message);
     }
 
-    async getKey(options?: { inline?: true, file?: true, saved?: true }): Promise<JWKInterface> {
+    async getKey(options?: { inline?: true, file?: true, saved?: true, path?: string }): Promise<JWKInterface> {
+
+        if (options && options.path) {
+            return keys.loadFromFile(options.path, this.cwd);
+        }
 
         if (!options || options.file) {
             if (this.context.parent.keyFile) {

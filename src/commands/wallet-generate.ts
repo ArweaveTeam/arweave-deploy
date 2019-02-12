@@ -27,9 +27,12 @@ export class WalletGenerateCommand extends Command {
 
         await file.write(Buffer.from(JSON.stringify(wallet, null, 4)));
 
-        this.log(chalk.cyanBright(`Your new wallet address: ${address}\n`));
-
-        this.log(`Successfully saved key to ${path}`);
+        this.print([
+            chalk.cyanBright(`Your new wallet address: ${address}\n`),
+            ``,
+            `Successfully saved key to ${path}`,
+            `Set this wallet as your default deploy wallet using 'arweave remember-wallet ${path}'`
+        ]);
     }
 
 }
