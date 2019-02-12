@@ -39,7 +39,6 @@ config.common = {
 
 config.build = merge(config.common, {
     name: 'build',
-    watch: true,
     plugins: [
         new webpack.BannerPlugin({
             banner: '#!/usr/bin/env node',
