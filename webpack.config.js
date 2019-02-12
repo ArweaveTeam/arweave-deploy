@@ -27,8 +27,9 @@ config.common = {
     },
     plugins: [
         new webpack.DefinePlugin({
-            __VERSION__: JSON.stringify(require("./package.json").version)
-        })
+            __VERSION__: JSON.stringify(require("./package.json").version),
+            'global.GENTLY': false 
+        }),
     ],
     output: {
         filename: 'arweave',
@@ -49,7 +50,7 @@ config.build = merge(config.common, {
 config.package = merge(config.common, {
     name: 'package',
     plugins: [
-        new Compiler(path.resolve(__dirname, 'dist/.build/arweave.js'))
+        new Compiler(path.resolve(__dirname, 'dist/.build/arweave.js')),
     ],
     output: {
         filename: 'arweave.js',

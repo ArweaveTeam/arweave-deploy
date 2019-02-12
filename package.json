@@ -11,6 +11,7 @@
     "@types/promptly": "^1.1.28",
     "arweave": "^1.1.8",
     "chai": "^4.2.0",
+    "cheerio": "^1.0.0-rc.2",
     "commander": "^2.19.0",
     "mime": "^2.4.0",
     "mocha": "^5.2.0",
@@ -22,9 +23,11 @@
     "webpack": "^4.28.4",
     "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cli": "^3.2.1",
-    "webpack-merge": "^4.2.1"
+    "webpack-merge": "^4.2.1",
+    "inline-source": "^6.1.9"
   },
   "scripts": {
+    "dev": "npx webpack --watch --config-name build && chmod +x dist/arweave",
     "build": "npx webpack --config-name build && chmod +x dist/arweave",
     "package": "npx webpack --config-name package",
     "test": "mocha --require ts-node/register test/*.ts"
@@ -44,6 +47,5 @@
   "bugs": {
     "url": "https://github.com/ArweaveTeam/arweave-deploy/issues"
   },
-  "homepage": "https://github.com/ArweaveTeam/arweave-deploy#readme",
-  "dependencies": {}
+  "homepage": "https://www.arweave.org/hosting"
 }

@@ -1,4 +1,4 @@
-import { JWKInterface } from "arweave/dist/node/arweave/lib/wallet";
+import { JWKInterface } from "arweave/node/arweave/lib/wallet";
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -120,7 +120,7 @@ export async function remember(key: JWKInterface, address: string, passphrase: s
         key: encrypt(Buffer.from(JSON.stringify(key)), passphrase).toString('base64')
     };
 
-    await file.write(Buffer.from(JSON.stringify(data)));
+    await file.write(Buffer.from(JSON.stringify(data)), {encoding: 'utf8'});
 }
 
 export async function forget(): Promise<void> {
