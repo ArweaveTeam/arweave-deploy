@@ -52,7 +52,11 @@ export async function buildTransaction(arweave: Arweave, file: File, key: JWKInt
     // The content-type tag value can be supplied by the user
     // this can be useful if the mime auto-detection fails for
     // whatever reason, or the user wants to set another value.
-    const contentType = (options.contentType || mime.getType(file.getPath()));
+    const contentType = (options.contentType || mime.getType(file.getPath())) || 'application/octet-stream';
+
+    if (!contentType.match('^text/.*$')) {
+        throw new Error(`Detected content type: ${contentType}\nBETA NOTICE: text/* content types are currently supported, more content types will be supported in future releases.`);
+    }
 
     // We need to read/parse the data before doing anything else as this will
     // change the data size, invalidate signatures etc.
@@ -60,6 +64,10 @@ export async function buildTransaction(arweave: Arweave, file: File, key: JWKInt
     const parser = options.package ? getParser(contentType) : getParser('*');
 
     const data = await parser.run(file, options);
+
+    if (data.byteLength >= 292969) {
+        throw new Error(`Detcted byte size: ${data.byteLength}\nBETA NOTICE: Data uploads are currently limited to 3MB per transaction.`);
+    }
 
     const transaction = await (options.siloUri ? newSiloTransaction(arweave, key, data, options.siloUri) : newTransaction(arweave, key, data));
 

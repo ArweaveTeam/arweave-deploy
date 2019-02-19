@@ -97,6 +97,7 @@ export class DeployCommand extends Command {
                 if (options.siloUri) {
                     return `\nSilo URI: ${options.siloUri}\n`;
                 }
+                return'';
             })(),
             `Price: ${this.formatWinston(transaction.reward)}`,
             `\nTags:\n\n${this.formatTags(transaction)}`,

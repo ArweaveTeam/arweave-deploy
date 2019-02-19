@@ -13,7 +13,7 @@ export class File {
     }
 
     public getType(){
-        return mime.getType(this.getPath())
+        return mime.getType(this.getPath()) || 'application/octet-stream'
     }
 
     public getBase(){

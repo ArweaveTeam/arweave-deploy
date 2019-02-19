@@ -8,12 +8,6 @@ export class DefaultParser implements ContentParserInterface {
 
     async run(entry: File, options: PrepareTransactionOptions = {}) {
 
-        const contentType = entry.getType();
-
-        if (!contentType.match('^text/.*$')) {
-            throw new Error(`Detected content type: ${contentType}\nBETA NOTICE: text/* content types are currently supported, more content types will be supported in future releases.`);
-        }
-
         const data = await entry.read();
 
         if (isMaybeKey(data.toString())) {
