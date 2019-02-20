@@ -2,11 +2,11 @@ import * as keys from '../lib/keys';
 import { Command } from '../command';
 import chalk from 'chalk';
 
-export class WalletRememberCommand extends Command {
+export class KeySaveCommand extends Command {
 
-    public signature = 'remember-wallet <key_file_path>';
+    public signature = 'key-save <key_file_path>';
 
-    public description = 'Save a wallet and use it as your default instead of using --key-file key.json';
+    public description = 'Save a key file and remove the need for the --key-file option';
 
     async action(path: string) {
 
@@ -30,7 +30,7 @@ export class WalletRememberCommand extends Command {
 
         await keys.remember(key, await this.arweave.wallets.jwkToAddress(key), passphrase);
 
-        this.print(chalk.greenBright(`Successfully saved key for wallet: ${address}`));
+        this.print(chalk.greenBright(`Successfully saved key file for wallet: ${address}`));
     }
 
 }

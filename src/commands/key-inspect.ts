@@ -1,9 +1,8 @@
 import { Command } from '../command';
-import * as keys from '../lib/keys';
 
-export class InspectWalletCommand extends Command {
+export class KeyInspect extends Command {
 
-    public signature = 'inspect-wallet';
+    public signature = 'key-inspect';
 
     public description = 'Inspect a key file';
 

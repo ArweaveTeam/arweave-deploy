@@ -1,16 +1,18 @@
-import * as Arweave from 'arweave/node';
+import Arweave from 'arweave/node';
 import chalk from 'chalk';
 import { Command  } from 'commander';
 import { BalanceCommand } from './commands/balance';
 import { DeployCommand } from './commands/deploy';
-import { InspectWalletCommand } from './commands/inspect-wallet';
 import { NetworkInfoCommand } from './commands/network-info';
 import { StatusCommand } from './commands/status';
-import { WalletForgetCommand } from './commands/wallet-forget';
-import { WalletGenerateCommand } from './commands/wallet-generate';
-import { WalletRememberCommand } from './commands/wallet-remember';
+
 
 import { logo } from './ascii';
+import { KeyCreateCommand } from './commands/key-create';
+import { KeyForgetCommand } from './commands/key-forget';
+import { KeySaveCommand } from './commands/key-save';
+import { KeyInspect } from './commands/key-inspect';
+import { PackageCommand } from './commands/package';
 
 declare var __VERSION__: string;
 
@@ -20,8 +22,8 @@ const log = console.log;
 
 const arweave = Arweave.init({
     host: 'arweave.net',
-    port: 80,
-    protocol: 'http',
+    port: 443,
+    protocol: 'https',
     timeout: 20000,
     logging: false,
     logger: log
@@ -32,10 +34,11 @@ const commands = [
     new StatusCommand(arweave, cwd, log),
     new BalanceCommand(arweave, cwd, log),
     new NetworkInfoCommand(arweave, cwd, log),
-    new WalletRememberCommand(arweave, cwd, log),
-    new WalletForgetCommand(arweave, cwd, log),
-    new WalletGenerateCommand(arweave, cwd, log),
-    new InspectWalletCommand(arweave, cwd, log),
+    new KeyCreateCommand(arweave, cwd, log),
+    new KeySaveCommand(arweave, cwd, log),
+    new KeyForgetCommand(arweave, cwd, log),
+    new KeyInspect(arweave, cwd, log),
+    new PackageCommand(arweave, cwd, log),
 ];
 
 const cli = new Command;
@@ -142,9 +145,13 @@ process.on('unhandledRejection', (reason, p) => {
 cli.on('--help', function () {
     log('')
     log('Examples:');
-    log('  arweave deploy index.html --key-file path/to/my/keyfile.json');
-    log('  arweave remember-wallet --key-file path/to/my/keyfile.json');
-    log('  arweave balance --key-file path/to/my/keyfile.json');
+    log('  Without a saved key file');
+    log('    arweave deploy index.html --key-file path/to/my/keyfile.json');
+    log('    arweave save-key --key-file path/to/my/keyfile.json');
+    log('    arweave balance --key-file path/to/my/keyfile.json');
+    log('  With a saved key file');
+    log('    arweave deploy index.html');
+    log('    arweave balance');
     log('')
     log('More help:');
     log(chalk.cyan('  https://docs.arweave.org/developers/tools/arweave-deploy\n'));

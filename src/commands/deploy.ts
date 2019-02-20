@@ -1,4 +1,4 @@
-import { Transaction, Tag } from 'arweave/node/arweave/lib/transaction';
+import { Transaction, Tag } from 'arweave/node/lib/transaction';
 import { Command } from '../command';
 import { File } from '../lib/file';
 import { buildTransaction, PrepareTransactionOptions } from '../lib/TransactionBuilder';
@@ -25,26 +25,12 @@ export class DeployCommand extends Command {
             }
         },
         {
-            signature: '--content-type <mime_type>',
-            description: 'Set the data content type manually',
-            action: (value: string): string => {
-                if (value.match(REGEX_CONTENT_TYPE)) {
-                    return value;
-                }
-                throw new Error('--content-type: Invalid content-type, must be a valid mime type in the format of */*, e.g. text/html');
-            }
-        },
-        {
             signature: '--force-skip-confirmation',
             description: 'Skip warnings, confirmations, and force upload',
         },
         {
             signature: '--force-skip-warnings',
             description: 'Skip warnings and disable safety checks',
-        },
-        {
-            signature: '--dry-run [output_data_path]',
-            description: 'Run through the deploy process without actually sending the transaction, an optional path can be specified to output the transaction object to.',
         },
         {
             signature: '--package',
@@ -54,10 +40,6 @@ export class DeployCommand extends Command {
 
     async action(path: string) {
 
-        if (this.context.dryRun) {
-            this.print(chalk.red(`Dry run - this will not actually send your transaction but you can see how it will be processed.`));
-        }
-
         const file = new File(path, this.cwd);
 
         const key = await this.getKey();
@@ -65,7 +47,6 @@ export class DeployCommand extends Command {
         const options: PrepareTransactionOptions = {
             siloUri: this.context.siloPublish,
             package: this.context.package,
-            // Default behaviour is to have warnings on so force it to true if the user doesn't specify
             warnings: !this.context.forceSkipWarnings,
         };
 
@@ -108,16 +89,6 @@ export class DeployCommand extends Command {
             ``,
         ]);
 
-        if (this.context.dryRun) {
-            // --dry-run can be a flag or a path to output the tx to
-            if (typeof this.context.dryRun == 'string') {
-                const output = new File(this.context.dryRun, this.cwd);
-                await output.write(Buffer.from(JSON.stringify(transaction, null, 4), 'utf8'));
-                this.print(chalk.red(`Transaction data saved to: ${output.getPath()}`));
-            }
-            return;
-        }
-
         if (this.arweave.ar.isLessThan(balance, transaction.reward)) {
             throw new Error(`Insufficient balance: balance ${this.formatWinston(balance)}, fee: ${this.formatWinston(transaction.reward)}`);
         }
@@ -146,9 +117,9 @@ export class DeployCommand extends Command {
             `Your file is deploying! 🚀`,
             `Once your file is mined into a block it'll be available on the following URL`,
             ``,
-            chalk.cyanBright(`http://arweave.net/${transaction.id}`),
+            chalk.cyanBright(`https://arweave.net/${transaction.id}`),
             ``,
-            `You can check it's status using 'arweave-deploy status ${transaction.id}'`
+            `You can check it's status using 'arweave status ${transaction.id}'`
         ]);
     }
 

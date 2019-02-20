@@ -2,11 +2,11 @@ import { Command } from '../command';
 import chalk from 'chalk';
 import { File } from '../lib/file';
 
-export class WalletGenerateCommand extends Command {
+export class KeyCreateCommand extends Command {
 
-    public signature = 'generate-wallet <output_file>';
+    public signature = 'key-create <output_file>';
 
-    public description = 'Generate a key file for a new wallet';
+    public description = 'Create a key file for a new wallet';
 
     async action(path: string) {
 
@@ -31,7 +31,7 @@ export class WalletGenerateCommand extends Command {
             chalk.cyanBright(`Your new wallet address: ${address}\n`),
             ``,
             `Successfully saved key to ${path}`,
-            `Set this wallet as your default deploy wallet using 'arweave remember-wallet ${path}'`
+            `Set this wallet as your default by using 'arweave save-key ${path}'`
         ]);
     }
 

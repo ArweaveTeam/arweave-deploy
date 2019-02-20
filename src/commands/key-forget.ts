@@ -2,11 +2,11 @@ import * as keys from '../lib/keys';
 import { Command } from '../command';
 import chalk from 'chalk';
 
-export class WalletForgetCommand extends Command {
+export class KeyForgetCommand extends Command {
 
-    public signature = 'forget-wallet';
+    public signature = 'key-forget';
 
-    public description = 'Forget your default key';
+    public description = 'Forget your saved key file';
 
     async action(path: string): Promise<void> {
 

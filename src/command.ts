@@ -1,5 +1,5 @@
-import { Arweave } from "arweave/node/arweave/arweave";
-import { JWKInterface } from "arweave/node/arweave/lib/wallet";
+import Arweave from "arweave/node";
+import { JWKInterface } from "arweave/node/lib/wallet";
 import chalk from 'chalk';
 import * as commander from "commander";
 import * as promptly from 'promptly';
