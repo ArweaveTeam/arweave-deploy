@@ -15,7 +15,7 @@ export class HtmlParser implements ContentParserInterface {
             attribute: false,
             compress: true,
             rootpath: entry.getDirectory(),
-            saveRemote: true,
+            saveRemote: false,
             svgAsImage: true,
             handlers: [
                 (async (source: any, context: any) => {
