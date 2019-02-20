@@ -1,10 +1,10 @@
 import { File } from './file';
-import { JWKInterface } from 'arweave/node/arweave/lib/wallet';
 import * as mime from 'mime';
-import { Transaction } from 'arweave/node/arweave/lib/transaction';
 import { HtmlParser } from '../parsers/text-html';
-import { Arweave } from 'arweave/node/arweave/arweave';
 import { DefaultParser } from '../parsers/default';
+import Arweave from 'arweave/node';
+import { Transaction } from 'arweave/node/lib/transaction';
+import { JWKInterface } from 'arweave/node/lib/wallet';
 
 declare var __VERSION__: string;
 export interface PrepareTransactionOptions {
@@ -45,6 +45,26 @@ export function getParser(contentType: string = '*'){
  */
 export async function buildTransaction(arweave: Arweave, file: File, key: JWKInterface, options: PrepareTransactionOptions = {}): Promise<{parser: ContentParserInterface, transaction: Transaction}>{
 
+    const {data, contentType, parser} = await parseData(file, options);
+
+    const transaction = await (options.siloUri ? newSiloTransaction(arweave, key, data, options.siloUri) : newTransaction(arweave, key, data));
+
+    transaction.addTag('Content-Type', contentType);
+    transaction.addTag('User-Agent', `ArweaveDeploy/${__VERSION__}`);
+
+    await arweave.transactions.sign(transaction, key);
+
+    if (!await arweave.transactions.verify(transaction)) {
+        throw new Error(`Failed to sign transaction, signature verification failed`);
+    }
+
+    return {
+        parser: parser,
+        transaction: transaction
+    };
+}
+
+export async function parseData(file: File, options: PrepareTransactionOptions): Promise<{data: Buffer, parser: ContentParserInterface, contentType: string}> {
     if (!await file.exists()) {
         throw new Error(`Failed to read file at path: ${file.getPath()}`);
     }
@@ -69,20 +89,10 @@ export async function buildTransaction(arweave: Arweave, file: File, key: JWKInt
         throw new Error(`Detcted byte size: ${data.byteLength}\nBETA NOTICE: Data uploads are currently limited to 3MB per transaction.`);
     }
 
-    const transaction = await (options.siloUri ? newSiloTransaction(arweave, key, data, options.siloUri) : newTransaction(arweave, key, data));
-
-    transaction.addTag('Content-Type', contentType);
-    transaction.addTag('User-Agent', `ArweaveDeploy/${__VERSION__}`);
-
-    await arweave.transactions.sign(transaction, key);
-
-    if (!await arweave.transactions.verify(transaction)) {
-        throw new Error(`Failed to sign transaction, signature verification failed`);
-    }
-
     return {
+        data: data,
         parser: parser,
-        transaction: transaction
+        contentType: contentType
     };
 }
 

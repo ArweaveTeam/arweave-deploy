@@ -8,22 +8,35 @@ export class StatusCommand extends Command {
 
     async action(transactionId: string, args: string, optional: string): Promise<void> {
 
-        const status = await this.arweave.transactions.getStatus(transactionId);
-
+        const response = await this.arweave.transactions.getStatus(transactionId);
+        
+        this.print(`Trasaction ID: ${transactionId}`);
 
         const codes = {
-            200: 'Confirmed',
+            200: 'Accepted',
             202: 'Pending',
-            404: 'Not found'
+            404: 'Not found (or not yet propagated)',
+            400: 'Invalid transaction',
+            500: 'Unknown error',
         };
 
-        const expanded = (<any>codes)[status];
-
-        this.log(`Trasaction ID: ${transactionId}`);
-        this.log(`Status: ${status} ${expanded ? expanded : ''}`);
-
-        if (status == 200) {
-            this.log(`URL: http://arweave.net/${transactionId}`);
+        if (response.status == 200) {
+            this.print([
+                ``,
+                `Status: ${response.status} Accepted`,
+                ``,
+                ` - Block: ${response.confirmed.block_height}`,
+                ` - Block hash: ${response.confirmed.block_indep_hash}`,
+                ` - Confirmations: ${response.confirmed.number_of_confirmations}`,
+                ``,
+                `Transaction URL: https://arweave.net/${transactionId}`,
+                `Block URL: https://arweave.net/block/hash/${response.confirmed.block_indep_hash}`,
+                ``,
+                `Block explorer URL: https://viewblock.io/arweave/block/${response.confirmed.block_height}`,
+                ``,
+            ]);
+        }else{
+            this.print(`Status: ${status} ${(<any>codes)[response.status] || ''}`);
         }
 
     }
