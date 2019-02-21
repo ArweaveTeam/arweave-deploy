@@ -1,6 +1,6 @@
 {
   "name": "arweave-deploy",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "arweave-deploy",
   "main": "dist/arweave",
   "devDependencies": {
@@ -46,6 +46,6 @@
   "bugs": {
     "url": "https://github.com/ArweaveTeam/arweave-deploy/issues"
   },
-  "homepage": "https://www.arweave.org/hosting",
+  "homepage": "https://www.arweave.org/hosting.html",
   "dependencies": {}
 }
