@@ -1,7 +1,7 @@
 import { Command } from '../command';
 import { File } from '../lib/file';
 import { PrepareTransactionOptions, parseData } from '../lib/TransactionBuilder';
-import { Transaction, Tag } from 'arweave/node/lib/transaction';
+import Transaction, { Tag } from 'arweave/node/lib/transaction';
 
 export class PackageCommand extends Command {
 

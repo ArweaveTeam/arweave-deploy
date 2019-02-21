@@ -1,8 +1,9 @@
-import { Transaction, Tag } from 'arweave/node/lib/transaction';
+
 import { Command } from '../command';
 import { File } from '../lib/file';
 import { buildTransaction, PrepareTransactionOptions } from '../lib/TransactionBuilder';
 import chalk from 'chalk';
+import Transaction, { Tag } from 'arweave/node/lib/transaction';
 
 const REGEX_CONTENT_TYPE = /[a-z0-9-_]+\/[a-z0-9-_]+/i;
 const REGEX_SILO_URI = /[a-z0-9-_]+\.[0-9]+/i;

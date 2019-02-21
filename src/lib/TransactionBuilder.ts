@@ -3,7 +3,7 @@ import * as mime from 'mime';
 import { HtmlParser } from '../parsers/text-html';
 import { DefaultParser } from '../parsers/default';
 import Arweave from 'arweave/node';
-import { Transaction } from 'arweave/node/lib/transaction';
+import Transaction from 'arweave/node/lib/transaction';
 import { JWKInterface } from 'arweave/node/lib/wallet';
 
 declare var __VERSION__: string;
