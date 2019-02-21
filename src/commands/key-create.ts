@@ -31,7 +31,7 @@ export class KeyCreateCommand extends Command {
             chalk.cyanBright(`Your new wallet address: ${address}\n`),
             ``,
             `Successfully saved key to ${path}`,
-            `Set this wallet as your default by using 'arweave save-key ${path}'`
+            `Set this wallet as your default by using 'arweave key-save ${path}'`
         ]);
     }
 
