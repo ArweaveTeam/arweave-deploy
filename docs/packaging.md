@@ -1,9 +1,11 @@
-- [The problem](#the-problem)
-- [The solution](#the-solution)
-- [Examples](#examples)
-  - [Stylesheets](#stylesheets)
-  - [JavaScript](#javascript)
-  - [Images](#images)
+# Arweave Deploy - HTML Packaging
+- [Arweave Deploy - HTML Packaging](#arweave-deploy---html-packaging)
+  - [The problem](#the-problem)
+  - [The solution](#the-solution)
+  - [Examples](#examples)
+    - [Style sheets](#style-sheets)
+    - [JavaScript](#javascript)
+    - [Images](#images)
 
 
 ## The problem
@@ -66,8 +68,18 @@ arweave package path-to-my-app/index.html my-packaged-output.html
 
 ## Examples
 
-### Stylesheets
-So now this stylesheet reference
+**Using the `--package` flag**
+
+http://arweave.net/cxsNxKLNEzbCFu7_v7kYbp9Fpq0NWuDPcEieDsuYkHk
+
+**Without using the `--package` flag**
+
+https://arweave.net/Oovrc3nWTpx3fAige-PuHQVnA1ebpJoGPxo1kLxJ3P8
+
+
+
+### Style sheets
+This style sheet reference
 ```html
 <link rel="stylesheet" href="assets/style.css">
 ```

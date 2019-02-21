@@ -4,7 +4,7 @@
   - [Installation](#installation)
     - [NPM (recommended)](#npm-recommended)
     - [Manual](#manual)
-  - [Quickstart](#quickstart)
+  - [Quick Start](#quick-start)
   - [Usage](#usage)
     - [Deploy a file](#deploy-a-file)
     - [Deploy a packaged HTML file](#deploy-a-packaged-html-file)
@@ -37,7 +37,7 @@ These binaries are around 30MB each as they come with a self-contained, bundled 
 - [windows (x86)](https://github.com/ArweaveTeam/arweave-deploy/raw/latest/dist/windows/arweave-x86.exe)
 
 
-## Quickstart
+## Quick Start
 
 Deploy a file
 
@@ -66,7 +66,7 @@ arweave deploy path-to-my/index.html --package
 
 ### Deploy a file
 
-If you're deploying HTML pages and have have external resources referenced, like stylesheets, javascript, or images, then use the [packaged HTML](#deploy-a-packaged-html-file) workflow.
+If you're deploying HTML pages and have have external resources referenced, like style sheets, JavaScript, or images, then use the [packaged HTML](#deploy-a-packaged-html-file) workflow.
 
 ```
 arweave deploy path-to-my/file.txt
@@ -87,7 +87,7 @@ To avoid having external dependencies we can package our HTML and external asset
 
 Under the hood your page will be processed using this [inline-source](https://www.npmjs.com/package/inline-source) NPM package, it's a common tool used in gulp and webpack workflows.
 
-[Read more](docs/packaging.md#the-problem) about why this is useful and how it works, with examples.
+[Read more about packaging](docs/packaging.md), why it's useful and how it works, with examples.
 
 ```
 arweave deploy path-to/index.html --package
