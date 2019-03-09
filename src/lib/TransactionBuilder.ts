@@ -75,7 +75,7 @@ export async function parseData(file: File, options: PrepareTransactionOptions):
     const contentType = (options.contentType || mime.getType(file.getPath())) || 'application/octet-stream';
 
     if (!contentType.match('^text/.*$')) {
-        // throw new Error(`Detected content type: ${contentType}\nBETA NOTICE: text/* content types are currently supported, more content types will be supported in future releases.`);
+        throw new Error(`Detected content type: ${contentType}\nBETA NOTICE: text/* content types are currently supported, more content types will be supported in future releases.`);
     }
 
     // We need to read/parse the data before doing anything else as this will
