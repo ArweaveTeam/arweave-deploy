@@ -13,6 +13,7 @@ import { KeyForgetCommand } from './commands/key-forget';
 import { KeySaveCommand } from './commands/key-save';
 import { KeyInspect } from './commands/key-inspect';
 import { PackageCommand } from './commands/package';
+import { ServeCommand } from './commands/serve';
 
 declare var __VERSION__: string;
 
@@ -39,6 +40,7 @@ const commands = [
     new KeyForgetCommand(arweave, cwd, log),
     new KeyInspect(arweave, cwd, log),
     new PackageCommand(arweave, cwd, log),
+    new ServeCommand(arweave, cwd, log),
 ];
 
 const cli = new Command;
