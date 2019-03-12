@@ -2,6 +2,8 @@ import { Command } from '../command';
 import { File } from '../lib/file';
 import { PrepareTransactionOptions, parseData } from '../lib/TransactionBuilder';
 import { resolve } from 'path';
+import chalk from 'chalk';
+import { logo } from '../ascii';
 
 import * as http from 'http';
 
@@ -14,6 +16,8 @@ export class ServeCommand extends Command {
     async action(path: string) {
 
         const inputFile = new File(path, this.cwd);
+
+        const port = this.arweave.api.config.port;
 
         if (!inputFile.exists()) {
             throw new Error(`File not found: ${path}`);
@@ -33,10 +37,28 @@ export class ServeCommand extends Command {
         });
 
         server.on('listening', () => {
-            this.serveLog('Started listening on http://localhost:1984/develop');
+            this.print([
+                chalk.cyan(logo()),
+                ``,
+                ``,
+                `Arweave local development server`,
+                ``,
+                `Arweave API proxy:`,
+                chalk.cyanBright(` - http://localhost:${port}`),
+                ``,
+                `Your application`,
+                chalk.cyanBright(` - http://localhost:${port}/develop`),
+                ``,
+                `Server ready and waiting for connections...`,
+                ``,
+                `Now let's build something great! 🚀`,
+                ``,
+                `Need help?`,
+                chalk.cyan(`https://docs.arweave.org/developers/tools/arweave-deploy/development-server`)
+            ]);
         });
 
-        server.listen(1984);
+        server.listen(port);
 
         await new Promise(resolve => {
             server.on('close', () => {
@@ -55,7 +77,7 @@ export class ServeCommand extends Command {
         }
 
         if (request.url.match(/^\/favicon.ico$/i)) {
-            return this.onfaviconRequest(inputFile, request, response);
+            return this.onFaviconRequest(inputFile, request, response);
         }
 
         return this.onProxyRequest(inputFile, request, response);
@@ -87,7 +109,34 @@ export class ServeCommand extends Command {
         } catch (error) {
             this.log(`Failed to process file: ${inputFile.getPath()}`);
             this.log(error);
+            this.onBuildError(error, request, response)
         }
+    }
+
+
+
+    protected async onBuildError(error: Error, request: http.IncomingMessage, response: http.ServerResponse){        
+
+        console.log('Received error', error);
+
+        const assetsDir = resolve('./src/assets/');
+
+        console.log('assetsDir', assetsDir);
+
+        const errorPage = new File('serve.error.html', assetsDir);
+
+        const src = await errorPage.read();
+
+
+        response.writeHead(200, {'Content-Type': 'text/html'});
+
+        response.write(src);
+
+        const injectError = `<script>document.getElementById('output').innerHTML = \`${error.stack}\`</script>`
+
+        response.write(injectError);
+
+        response.end();
     }
 
     protected async onProxyRequest(inputFile: File, request: http.IncomingMessage, response: http.ServerResponse){
@@ -113,6 +162,7 @@ export class ServeCommand extends Command {
             }
         } catch (error) {
             this.serveLog(`Error on proxy request: ${error.response.status}`)
+            this.onBuildError(error, request, response);
             if (error.response) {
                 proxyResponse = {
                     headers: error.response.headers,
@@ -123,11 +173,11 @@ export class ServeCommand extends Command {
         }
 
         response.writeHead(proxyResponse.status, proxyResponse.headers);
-        response.write(proxyResponse.data);å
+        response.write(proxyResponse.data);
         response.end();
     }
 
-    protected async onfaviconRequest(inputFile: File, request: http.IncomingMessage, response: http.ServerResponse){        
+    protected async onFaviconRequest(inputFile: File, request: http.IncomingMessage, response: http.ServerResponse){        
         const assetsDir = resolve('./src/assets/');
 
         const icon = new File('favicon.ico', assetsDir);

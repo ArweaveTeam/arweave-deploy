@@ -23,7 +23,6 @@ export class HtmlParser implements ContentParserInterface {
                     if (source.type == 'image'){
                         return await importRemoteImages(source, context, logger);
                     }
-
                     if (source.fileContent && !source.content && source.type == 'css') {
                         return await importCssUrls(source, context, logger);
                     }

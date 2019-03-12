@@ -50,13 +50,28 @@ cli.option('-v --version', 'Show the version number', (): void => {
     quit(0);
 });
 
-cli.option('--protocol <protocol>', 'Set the protocol to use (http or https)', (protocol: string): void => {
-    arweave.api.getConfig().protocol = protocol;
-})
+cli.option(
+    '--host <hostname_or_ip>',
+    'Set the network hostname to use',
+    (host: string): void => {
+        arweave.api.getConfig().host = host
+        /**
+         * Arguments are parsed in the order they're defined here, so if the user changes the hostname away
+         * from the default (arweave.net), then we should reset the protocol and port to the network
+         * defaults.
+         */
+        arweave.api.getConfig().protocol = 'http'
+        arweave.api.getConfig().port = '1984'
+    },
+)
 
-cli.option('--host <hostname_or_ip>', 'Set the network hostname to use', (host: string): void => {
-    arweave.api.getConfig().host = host;
-})
+cli.option(
+    '--protocol <protocol>',
+    'Set the protocol to use (http or https)',
+    (protocol: string): void => {
+        arweave.api.getConfig().protocol = protocol
+    },
+)
 
 cli.option('--port <port_number>', 'Set the network port to use', (port: string): void => {
     arweave.api.getConfig().port = port;
