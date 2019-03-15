@@ -16,6 +16,7 @@
     "mime": "^2.4.0",
     "mocha": "^5.2.0",
     "nexe": "^3.0.0-beta.10",
+    "prettier": "^1.16.4",
     "promptly": "^3.0.3",
     "ts-loader": "^5.3.3",
     "ts-node": "^7.0.1",
@@ -51,5 +52,15 @@
     "url": "https://github.com/ArweaveTeam/arweave-deploy/issues"
   },
   "homepage": "https://www.arweave.org/hosting.html",
-  "dependencies": {}
+  "dependencies": {
+    "@types/ws": "^6.0.1",
+    "ws": "^6.2.0"
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "tabWidth": 4,
+    "semi": false,
+    "singleQuote": true,
+    "parser": "typescript"
+  }
 }

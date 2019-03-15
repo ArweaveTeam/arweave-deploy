@@ -12,12 +12,21 @@ export class File {
         this.base = base;
     }
 
-    public getType(){
+    public getType(): string {
         return mime.getType(this.getPath()) || 'application/octet-stream'
     }
 
-    public getBase(){
+    public getBase(): string{
         return this.base;
+    }
+
+    /**
+     * Get the file name
+     *
+     * @memberof File
+     */
+    public getName({extension} = {extension: true}): string {
+        return extension ? path.basename(this.path) : path.basename(this.path, path.extname(this.path))
     }
 
     /**
@@ -26,7 +35,7 @@ export class File {
      * @returns
      * @memberof File
      */
-    public getPath() {
+    public getPath(): string {
         return this.base ? path.resolve(this.base, this.path) : this.path;
     }
 
@@ -36,7 +45,7 @@ export class File {
      * @returns
      * @memberof File
      */
-    public getDirectory() {
+    public getDirectory(): string {
         return path.dirname(this.getPath());
     }
 
@@ -96,7 +105,7 @@ export class File {
         });
     }
 
-    public delete(): Promise<fs.Stats> {
+    public delete(): Promise<void> {
         return new Promise((resolve, reject) => {
             fs.unlink(this.getPath(), (error: Error) => {
                 if (error) {

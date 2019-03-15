@@ -34,7 +34,8 @@ config.common = {
     output: {
         filename: 'arweave',
         path: path.resolve(__dirname, 'dist')
-    }
+    },
+    externals: ['bufferutil', 'utf-8-validate'],
 }
 
 config.build = merge(config.common, {
