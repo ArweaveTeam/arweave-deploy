@@ -8,6 +8,7 @@ import {inspect} from 'util';
 import * as http from 'http';
 import * as url from 'url';
 import { HtmlParser } from '../parsers/text-html';
+import { watch, Stats } from 'fs';
 
 import { Source, subResource } from '../lib/inline-source-context';
 import * as WebSocket from 'ws';
@@ -32,6 +33,9 @@ interface BuildInfo{
 }
 
 interface Session{
+    status: {
+        buildInProgress: boolean
+    }
     build?: Build
 }
 
@@ -43,11 +47,25 @@ export class ServeCommand extends Command {
 
     private wss: WebSocket.Server;
 
-    private session: Session = {};
+    private session: Session = {
+        status: {
+            buildInProgress: false
+        }
+    };
 
     async action(path: string) {
 
         const inputFile = new File(path, this.cwd);
+
+        this.consoleLog(`Watching application directory for changes: ${inputFile.getDirectory()}`);
+
+        watch(inputFile.getDirectory(), {recursive: true}, (event: string, filename: string) => {
+            this.consoleLog(`File changed: ${filename}`);
+
+            if (!this.session.status.buildInProgress) {
+                this.startBuild(inputFile);
+            }
+        });
 
         const port = this.arweave.api.config.port;
 
@@ -105,6 +123,8 @@ export class ServeCommand extends Command {
 
         server.listen(port);
 
+        this.startBuild(inputFile);
+
         await new Promise(resolve => {
             server.on('close', () => {
                 this.consoleLog('Stopping server...');
@@ -126,8 +146,8 @@ export class ServeCommand extends Command {
 
     protected async wsOnMessage(ws: WebSocket, message:WebSocket.Data){
         let request = JSON.parse(<string>message);
-        if (request.type == 'build.get') {
-            this.wsPush({type: 'build.new', data: this.session.build ? this.session.build.report : {}})
+        if (request.action == 'build.get') {
+            this.wsPush({action: 'build.new', data: this.session.build ? this.session.build.report : {}})
         }
     }
 
@@ -137,10 +157,6 @@ export class ServeCommand extends Command {
 
         if (request.url.match(/^\/app$/i)) {
             return this.onAppServeRequest(inputFile, request, response);
-        }
-
-        if (request.url.match(/^\/app\/build$/i)) {
-            return this.onAppBuildRequest(inputFile, request, response);
         }
 
         if (request.url.match(/^\/build$/i)) {
@@ -154,52 +170,59 @@ export class ServeCommand extends Command {
         return this.onProxyRequest(inputFile, request, response);
     }
 
-    protected async onAppBuildRequest(inputFile: File, request: http.IncomingMessage, response: http.ServerResponse): Promise<void>{
-        this.wsPush({type: 'build.starting'});
-
-        this.session.build = await this.newBuild(inputFile);
-
-        this.wsPush({type: 'build.new', data: this.session.build.report})
-
-        return this.onAppServeRequest(inputFile, request, response);
+    protected async startBuild(inputFile: File): Promise<void>{
+        this.session.status.buildInProgress = true;
+        try {
+            this.consoleLog(`Starting build...`);
+            this.wsPush({action: 'build.starting'});
+            this.session.build = await this.newBuild(inputFile);
+            this.consoleLog(`Build complete!`);
+            this.wsPush({action: 'build.new', data: this.session.build.report});
+        } catch (error) {
+            this.session.status.buildInProgress = false;
+            this.consoleLog(`Build error: ${error}`);
+            throw error;
+        }
+        this.session.status.buildInProgress = false;
     }
 
 
     protected async onAppServeRequest(inputFile: File, request: http.IncomingMessage, response: http.ServerResponse): Promise<void>{
         try {
+            const assetsDir = resolve('./src/assets/');
+            const reloadScript = new File('inject.js', assetsDir);
+            const reloadSrc = await reloadScript.read();
+
             response.writeHead(200, {'Content-Type': 'text/html'});
             response.write(this.session.build ? this.session.build.output : '');
+            response.write(reloadSrc);
+    
             response.end();
 
         } catch (error) {
-            this.wsPush({type: 'build.failed'});
-            // session.errors.push(error);
+            this.wsPush({action: 'build.failed'});
             this.log(`Failed to process file: ${inputFile.getPath()}`);
             this.log(error);
-            // this.onBuildUIRequest(error, request, response, session)
         }
     }
 
     protected async newBuild(inputFile: File): Promise<Build> {
 
-        const build = await (new HtmlParser()).build(inputFile, {package: true});
-
-        const contentType = 'text/html';
-
-        const output = Buffer.from(build.html);
+        const packaged = await (new HtmlParser()).build(inputFile, {package: true});
+        const output = Buffer.from(packaged.html);
 
         this.consoleLog(`Successfully built: ${inputFile.getPath()}`, {
             data: {
-                type: contentType,
+                type: 'text/html',
                 size: File.bytesForHumans(output.byteLength),
                 bytes: output.byteLength,
             }
         });
 
-        const buidlIsValid = build.sources.reduce((carry: boolean, current: Source) => carry && !current.errored, true);
+        const buidlIsValid = packaged.sources.reduce((carry: boolean, current: Source) => carry && !current.errored, true);
 
         const refs = {
-            external: build.sources.reduce((carry: number, current: Source) => {
+            external: packaged.sources.reduce((carry: number, current: Source) => {
 
                 let remotes = carry + (current.isRemote ? 1 : 0);
 
@@ -223,9 +246,9 @@ export class ServeCommand extends Command {
                     }
                 },
                 size: {
-                    bytes: build.html.length,
+                    bytes: output.byteLength,
                 },
-                sources: build.sources,
+                sources: packaged.sources,
             }
         }
     }
