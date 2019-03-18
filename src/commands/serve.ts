@@ -39,6 +39,21 @@ interface Session{
     build?: Build
 }
 
+function readData(stream: http.IncomingMessage){
+    const chunks: Buffer[] = [];
+
+    return new Promise((resolve, reject) => {
+        stream.on("data", function (chunk: Buffer) {
+            chunks.push(chunk);
+        });
+    
+        // Send the buffer or you can put it into a var
+        stream.on("end", function () {
+            resolve(Buffer.concat(chunks));
+        });
+    });
+}
+
 export class ServeCommand extends Command {
 
     public signature = 'serve <file_path>';
@@ -299,12 +314,15 @@ export class ServeCommand extends Command {
             status: 500
         };
 
+        const data = await readData(request);
+
         try {
             const arweaveResponse = await this.arweave.api.request().request({
                 method: request.method,
                 // Substring to remove the initial / otherwise the url will get mapped to host.net//rest-of-url
                 url: request.url.substring(1),
-                responseType: 'arraybuffer'
+                responseType: 'arraybuffer',
+                data: data
             });
 
             proxyResponse = {
@@ -314,6 +332,9 @@ export class ServeCommand extends Command {
             }
         } catch (error) {
             this.consoleLog(`Error on proxy request: ${error.response.status}`)
+
+            // console.error(error);
+            // inspect(error);
 
             if (error.response) {
                 proxyResponse = {
