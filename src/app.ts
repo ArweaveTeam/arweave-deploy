@@ -77,30 +77,30 @@ cli.option('--debug', 'Enable additional logging', (): void => {
     arweave.api.getConfig().logging = true;
 })
 
-commands.forEach(instance => {
+commands.forEach(command => {
 
-    const context = cli.command(instance.getSignature());
+    const instance = cli.command(command.getSignature());
 
-    context.description(instance.getDescription());
+    instance.description(command.getDescription());
 
-    const options = instance.getOptions();
+    const options = command.getOptions();
 
     options.forEach((option) => {
-        context.option(option.signature, option.description, option.action)
+        instance.option(option.signature, option.description, option.action)
     });
 
     /**
      * We need to intercept and manually invoke the handler
      * with the correct context.
      */
-    context.action((...args) => {
+    instance.action((...args) => {
 
         if (cli.debug) {
             log('Loaded config:');
             log(JSON.stringify(arweave.api.getConfig(), null, 4));
         }
 
-        instance.action.apply(instance, [...args])
+        command.action.apply(command, [...args])
         .then(()=>{
             quit(0);
         })
@@ -114,7 +114,7 @@ commands.forEach(instance => {
         });
     });
 
-    instance.setContext(context);
+    command.setContext(instance);
 });
 
 function quit(exitcode = 0) {
@@ -152,6 +152,9 @@ cli.on('--help', function () {
     log('  With a saved key file');
     log('    arweave deploy index.html');
     log('    arweave balance');
+    log('')
+    log('Command specific options an flags:');
+    log(chalk.green('  arweave {command} --help, e.g. arweave deploy --help'));
     log('')
     log('More help:');
     log(chalk.cyan('  https://docs.arweave.org/developers/tools/arweave-deploy\n'));

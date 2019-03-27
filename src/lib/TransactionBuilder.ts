@@ -74,7 +74,7 @@ export async function parseData(file: File, options: PrepareTransactionOptions):
     // whatever reason, or the user wants to set another value.
     const contentType = (options.contentType || mime.getType(file.getPath())) || 'application/octet-stream';
 
-    if (!contentType.match('^text/.*$')) {
+    if ((process.env.awd_filter_types !== '0') && !contentType.match('^(text/.*|application/pdf)$')) {
         throw new Error(`Detected content type: ${contentType}\nBETA NOTICE: text/* content types are currently supported, more content types will be supported in future releases.`);
     }
 

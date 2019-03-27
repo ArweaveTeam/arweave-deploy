@@ -8,13 +8,42 @@ import Transaction, { Tag } from 'arweave/node/lib/transaction';
 const REGEX_CONTENT_TYPE = /[a-z0-9-_]+\/[a-z0-9-_]+/i;
 const REGEX_SILO_URI = /[a-z0-9-_]+\.[0-9]+/i;
 
+interface UserTag{
+    key: string
+    value: string
+}
+
 export class DeployCommand extends Command {
 
     public signature = 'deploy <file_path>';
 
     public description = 'Deploy a file';
 
+
     public options = [
+          {
+            signature: '--tag <key>:<value>',
+            description: 'Add a tag to a transaction',
+            action: (value: string, collection: UserTag[] = []): UserTag[] => {
+                // Tags are passed as key:value strings
+                const split = value.split(':');
+
+                if (split.length != 2) {
+                    throw new Error('--tag: Tags must be defined as key:value pairs, the key and value strings cannot themselves contain ":"');
+                }
+
+                if (split[0].toLowerCase() == 'content-type') {
+                    throw new Error('--tag: "content-type" is a reserved tag, use the --content--type option to modify the upload content type');
+                }
+
+                collection.push({
+                    key: split[0],
+                    value: split[1]
+                });
+
+                return collection;
+            }
+        },
         {
             signature: '--silo-publish <silo_uri>',
             description: 'Define a Silo URI and publish the transaction on Silo',
@@ -35,7 +64,7 @@ export class DeployCommand extends Command {
         },
         {
             signature: '--package',
-            description: 'Package and optimise JS + CSS assets.',
+            description: 'Package and optimise JS + CSS assets',
         }
     ];
 
@@ -56,6 +85,14 @@ export class DeployCommand extends Command {
         }
 
         const {transaction, parser} = await buildTransaction(this.arweave, file, key, options);
+
+        if (this.context.tag) {
+            this.context.tag.forEach((userTag: UserTag) => {
+                transaction.addTag(userTag.key, userTag.value)
+            });
+
+            this.arweave.transactions.sign(transaction, key)
+        }
 
         const address = await this.arweave.wallets.jwkToAddress(key);
 
@@ -170,7 +207,7 @@ export class DeployCommand extends Command {
         const tags = this.getTags(transaction);
 
         return Object.keys(tags).map((key: string): string => {
-            return ` - ${key}: ${tags[key]}`;
+            return ` - ${key}:${tags[key]}`;
         }).join('\n');
     }
 
