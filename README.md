@@ -1,6 +1,9 @@
 # Arweave Deploy
 
 - [Arweave Deploy](#arweave-deploy)
+  - [Build](#build)
+    - [Build for local Node.js](#build-for-local-nodejs)
+    - [Build portable binaries](#build-portable-binaries)
   - [Installation](#installation)
     - [NPM (recommended)](#npm-recommended)
     - [Manual](#manual)
@@ -13,6 +16,33 @@
     - [Generate a keyfile](#generate-a-keyfile)
     - [Remove your keyfile](#remove-your-keyfile)
     - [Check your wallet balance](#check-your-wallet-balance)
+
+## Build
+
+### Build for local Node.js
+
+This will build to run on your locally installed Node.js using `#!/usr/bin/env node`.
+
+
+```
+npm install
+npm run build
+
+./dist/arweave
+```
+
+### Build portable binaries
+
+This will build a set of portable binaries packaged with self-contained Node.js in a single executable, so they can be run on Linux, macOS, and Windows without Node.js installed.
+```
+npm install
+npm run package
+
+./dist/macos/arweave
+./dist/linux/arweave
+./dist/windows/arweave-x86.exe
+./dist/windows/arweave-x64.exe
+```
 
 ## Installation
 
