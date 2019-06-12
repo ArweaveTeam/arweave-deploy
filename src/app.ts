@@ -11,7 +11,8 @@ import { logo } from './ascii';
 import { KeyCreateCommand } from './commands/key-create';
 import { KeyForgetCommand } from './commands/key-forget';
 import { KeySaveCommand } from './commands/key-save';
-import { KeyInspect } from './commands/key-inspect';
+import { KeyExportCommand } from './commands/key-export';
+import { KeyInspectCommand } from './commands/key-inspect';
 import { PackageCommand } from './commands/package';
 
 declare var __VERSION__: string;
@@ -36,8 +37,9 @@ const commands = [
     new NetworkInfoCommand(arweave, cwd, log),
     new KeyCreateCommand(arweave, cwd, log),
     new KeySaveCommand(arweave, cwd, log),
+    new KeyExportCommand(arweave, cwd, log),
     new KeyForgetCommand(arweave, cwd, log),
-    new KeyInspect(arweave, cwd, log),
+    new KeyInspectCommand(arweave, cwd, log),
     new PackageCommand(arweave, cwd, log),
 ];
 
