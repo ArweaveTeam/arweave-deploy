@@ -155,7 +155,7 @@ cli.on('--help', function () {
     log('    arweave deploy index.html');
     log('    arweave balance');
     log('')
-    log('Command specific options an flags:');
+    log('Command specific options and flags:');
     log(chalk.green('  arweave {command} --help, e.g. arweave deploy --help'));
     log('')
     log('More help:');
