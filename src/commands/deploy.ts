@@ -24,7 +24,7 @@ export class DeployCommand extends Command {
     public options = [
           {
             signature: '--tag <key>:<value>',
-            description: 'Add a tag to a transaction',
+            description: 'Add a tag',
             action: (value: string, collection: UserTag[] = []): UserTag[] => {
                 // Tags are passed as key:value strings
                 const split = value.split(':');
@@ -34,7 +34,7 @@ export class DeployCommand extends Command {
                 }
 
                 if (split[0].toLowerCase() == 'content-type') {
-                    throw new Error('--tag: "content-type" is a reserved tag, use the --content--type option to modify the upload content type');
+                    throw new Error('--tag: "content-type" is a reserved tag');
                 }
 
                 collection.push({
@@ -47,7 +47,7 @@ export class DeployCommand extends Command {
         },
         {
             signature: '--silo-publish <silo_uri>',
-            description: 'Define a Silo URI and publish the transaction on Silo',
+            description: 'Publish to Silo',
             action: (value: string) => {
                 if (value.match(REGEX_SILO_URI)) {
                     return value;
@@ -57,7 +57,7 @@ export class DeployCommand extends Command {
         },
         {
             signature: '--ipfs-publish',
-            description: 'Publish with Arweave+IPFS',
+            description: 'Publish with Arweave+IPFS (experimental)',
         },
         {
             signature: '--force-skip-confirmation',
