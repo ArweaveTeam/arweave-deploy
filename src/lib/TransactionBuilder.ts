@@ -43,7 +43,12 @@ export function getParser(contentType: string = '*'){
  * @param {PrepareTransactionOptions} [options={}]
  * @returns {Promise<Transaction>}
  */
-export async function buildTransaction(arweave: Arweave, file: File, key: JWKInterface, options: PrepareTransactionOptions = {}): Promise<{parser: ContentParserInterface, transaction: Transaction}>{
+export async function buildTransaction(
+  arweave: Arweave,
+  file: File,
+  key: JWKInterface,
+  options: PrepareTransactionOptions = {}
+): Promise<{ parser: ContentParserInterface; data: Buffer, transaction: Transaction }> {
 
     const {data, contentType, parser} = await parseData(file, options);
 
@@ -59,8 +64,9 @@ export async function buildTransaction(arweave: Arweave, file: File, key: JWKInt
     }
 
     return {
-        parser: parser,
-        transaction: transaction
+        parser,
+        data,
+        transaction
     };
 }
 
