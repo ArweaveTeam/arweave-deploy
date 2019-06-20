@@ -17,6 +17,7 @@
     - [Generate a keyfile](#Generate-a-keyfile)
     - [Remove your keyfile](#Remove-your-keyfile)
     - [Check your wallet balance](#Check-your-wallet-balance)
+    - [Send AR to another wallet](#Send-AR-to-another-wallet)
 
 ## Build
 
@@ -248,4 +249,30 @@ arweave balance
 ```
 Address: pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI
 Balance: 10.113659492352 AR
+```
+
+### Send AR to another wallet
+
+```
+arweave send <amount_in_ar> <to_arweave_address>
+```
+```
+arweave send 10.5 DAJH66MHqEKImi4Jbuz8V7ZZFPauNGCdbJ0plp5vH8d
+```
+
+```
+Transaction
+
+ID: cuzpWQOqaxkO_TY-wEKoFh5RLgfNgKDhDbO1JAzCoos
+
+To: DAJH66MHqEKImi4Jbuz8V7ZZFPauNGCdbJ0plp5vH8d
+Amount: 10.422000000000 AR
+Fee: 0.000214119475 AR
+Total: 10.422214119475 AR
+
+Wallet
+
+Address: pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI
+Current balance: 11.095252211832 AR
+Balance after uploading: 0.673038092357 AR
 ```
