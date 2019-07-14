@@ -60,15 +60,20 @@ const importCssUrls = async (source: any, context: any, logger: Function): Promi
         const cssUrl = match[1];
 
         // Remove any quotes or whitespace that might be encasing the path as it's perfectly valid in CSS
-        // but we need clean path to work with. remove any query params or # locations as they won't be valid paths.
         let path = cssUrl.replace(/^'\//g, '').replace(/('|")/g, '').trim();
+        
+        // remove any query params or # locations as they won't be valid paths.
+        path = path.replace(/(\#|\?).*/, '');
+
+        // continue, if path is empty string, this will happen if url happens to be just #location
+        if(!path){
+            continue;
+        }
 
         // Only import local resources, so don't import https/s externals.
         if (path.startsWith('data') || path.startsWith('http')) {
             continue;
         }
-
-        path = path.replace(/(\#|\?).*/, '');
 
         const resource = new File(path, dirname(source.filepath));
 
