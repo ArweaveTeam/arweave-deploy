@@ -4,9 +4,15 @@ import { File } from '../lib/file';
 import { buildTransaction, PrepareTransactionOptions } from '../lib/TransactionBuilder';
 import chalk from 'chalk';
 import Transaction, { Tag } from 'arweave/node/lib/transaction';
+import { getIpfsCid } from '../lib/ipfs';
 
 const REGEX_CONTENT_TYPE = /[a-z0-9-_]+\/[a-z0-9-_]+/i;
 const REGEX_SILO_URI = /[a-z0-9-_]+\.[0-9]+/i;
+
+interface UserTag{
+    key: string
+    value: string
+}
 
 export class DeployCommand extends Command {
 
@@ -14,16 +20,44 @@ export class DeployCommand extends Command {
 
     public description = 'Deploy a file';
 
+
     public options = [
+          {
+            signature: '--tag <key>:<value>',
+            description: 'Add a tag',
+            action: (value: string, collection: UserTag[] = []): UserTag[] => {
+                // Tags are passed as key:value strings
+                const split = value.split(':');
+
+                if (split.length != 2) {
+                    throw new Error('--tag: Tags must be defined as key:value pairs, the key and value strings cannot themselves contain ":"');
+                }
+
+                if (split[0].toLowerCase() == 'content-type') {
+                    throw new Error('--tag: "content-type" is a reserved tag');
+                }
+
+                collection.push({
+                    key: split[0],
+                    value: split[1]
+                });
+
+                return collection;
+            }
+        },
         {
             signature: '--silo-publish <silo_uri>',
-            description: 'Define a Silo URI and publish the transaction on Silo',
+            description: 'Publish to Silo',
             action: (value: string) => {
                 if (value.match(REGEX_SILO_URI)) {
                     return value;
                 }
                 throw new Error('--silo-publish: Silo URIs can only contain letters, numbers, dashes and underscores, followed by dot and a number. E.g. My-silo-thing.2');
             }
+        },
+        {
+            signature: '--ipfs-publish',
+            description: 'Publish with Arweave+IPFS (experimental)',
         },
         {
             signature: '--force-skip-confirmation',
@@ -35,7 +69,7 @@ export class DeployCommand extends Command {
         },
         {
             signature: '--package',
-            description: 'Package and optimise JS + CSS assets.',
+            description: 'Package and optimise JS + CSS assets',
         }
     ];
 
@@ -55,7 +89,21 @@ export class DeployCommand extends Command {
             options.logger = this.print;
         }
 
-        const {transaction, parser} = await buildTransaction(this.arweave, file, key, options);
+        const {transaction, parser, data} = await buildTransaction(this.arweave, file, key, options);
+        const ipfsCid = await getIpfsCid(data);
+
+        if (this.context.tag) {
+
+            this.context.tag.forEach((userTag: UserTag) => {
+                transaction.addTag(userTag.key, userTag.value)
+            });
+        }
+
+        if (this.context.ipfsPublish) {
+            transaction.addTag('IPFS-Add', ipfsCid);
+        }
+        
+        this.arweave.transactions.sign(transaction, key);
 
         const address = await this.arweave.wallets.jwkToAddress(key);
 
@@ -63,11 +111,13 @@ export class DeployCommand extends Command {
 
         const balanceAfter = this.arweave.ar.sub(balance, transaction.reward);
 
+
         this.print([
             `\nFile\n`,
             `Path: ${path}`,
         ]);
-        this.print(`Size: ${File.bytesForHumans(transaction.get('data', { decode: true, string: false }).byteLength)}`);
+
+        this.print(`Size: ${File.bytesForHumans(data.byteLength)}`);
 
         if (parser && parser.description) {
             this.print(`Optimisations\n - ${parser.description}`);
@@ -101,10 +151,10 @@ export class DeployCommand extends Command {
                 throw new Error(`User cancelled`);
             }
         }
-
+        
         /**
          * Axios still haven't produced a release where the deprecated
-         * buffer consructor issue has been fixed, so we need to manually
+         * buffer constructor issue has been fixed, so we need to manually
          * bufferify the transaction for now to avoid a deprecation warning
          * at runtime being printed to the cli.
          */
@@ -119,9 +169,21 @@ export class DeployCommand extends Command {
             `Once your file is mined into a block it'll be available on the following URL`,
             ``,
             chalk.cyanBright(`https://arweave.net/${transaction.id}`),
-            ``,
-            `You can check it's status using 'arweave status ${transaction.id}'`
         ]);
+
+        if (this.context.ipfsPublish) {
+            this.print([
+                ``,
+                chalk.cyanBright(`https://ipfs.io/ipfs/${ipfsCid}`)
+            ])
+        }
+
+        this.print([
+            ``,
+            `You can check its status using 'arweave status ${transaction.id}'
+        `]);
+
+        
     }
 
     /**
@@ -170,7 +232,7 @@ export class DeployCommand extends Command {
         const tags = this.getTags(transaction);
 
         return Object.keys(tags).map((key: string): string => {
-            return ` - ${key}: ${tags[key]}`;
+            return ` - ${key}:${tags[key]}`;
         }).join('\n');
     }
 

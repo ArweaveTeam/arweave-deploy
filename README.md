@@ -1,18 +1,50 @@
 # Arweave Deploy
 
-- [Arweave Deploy](#arweave-deploy)
-  - [Installation](#installation)
-    - [NPM (recommended)](#npm-recommended)
-    - [Manual](#manual)
-  - [Quick Start](#quick-start)
-  - [Usage](#usage)
-    - [Deploy a file](#deploy-a-file)
-    - [Deploy a packaged HTML file](#deploy-a-packaged-html-file)
-    - [Check a deployment status](#check-a-deployment-status)
-    - [Load your keyfile](#load-your-keyfile)
-    - [Generate a keyfile](#generate-a-keyfile)
-    - [Remove your keyfile](#remove-your-keyfile)
-    - [Check your wallet balance](#check-your-wallet-balance)
+- [Arweave Deploy](#Arweave-Deploy)
+  - [Build](#Build)
+    - [Build for local Node.js](#Build-for-local-Nodejs)
+    - [Build portable binaries](#Build-portable-binaries)
+  - [Installation](#Installation)
+    - [NPM (recommended)](#NPM-recommended)
+    - [Manual](#Manual)
+  - [Quick Start](#Quick-Start)
+  - [Usage](#Usage)
+    - [Deploy a file](#Deploy-a-file)
+    - [Deploy a file with Arweave+IPFS](#Deploy-a-file-with-ArweaveIPFS)
+    - [Deploy a packaged HTML file](#Deploy-a-packaged-HTML-file)
+    - [Check a deployment status](#Check-a-deployment-status)
+    - [Load your keyfile](#Load-your-keyfile)
+    - [Generate a keyfile](#Generate-a-keyfile)
+    - [Remove your keyfile](#Remove-your-keyfile)
+    - [Check your wallet balance](#Check-your-wallet-balance)
+    - [Send AR to another wallet](#Send-AR-to-another-wallet)
+
+## Build
+
+### Build for local Node.js
+
+This will build to run on your locally installed Node.js using `#!/usr/bin/env node`.
+
+
+```
+npm install
+npm run build
+
+./dist/arweave
+```
+
+### Build portable binaries
+
+This will build a set of portable binaries packaged with self-contained Node.js in a single executable, so they can be run on Linux, macOS, and Windows without Node.js installed.
+```
+npm install
+npm run package
+
+./dist/macos/arweave
+./dist/linux/arweave
+./dist/windows/arweave-x86.exe
+./dist/windows/arweave-x64.exe
+```
 
 ## Installation
 
@@ -42,13 +74,20 @@ These binaries are around 30MB each as they come with a self-contained, bundled 
 Deploy a file
 
 ```
-arweave deploy path-to-my/file.txt --key-file path/to/arweave-key.json
+arweave deploy path-to-my/file.html --key-file path/to/arweave-key.json
 ```
 
 Deploy a HTML file
 
 ```
 arweave deploy path-to-my/index.html --key-file path/to/arweave-key.json --package
+```
+
+
+Deploy a HTML file to Arweave+IPFS
+
+```
+arweave deploy path-to-my/index.html --key-file path/to/arweave-key.json --package --ipfs-publish
 ```
 
 Save your keyfile
@@ -69,17 +108,40 @@ arweave deploy path-to-my/index.html --package
 If you're deploying HTML pages and have have external resources referenced, like style sheets, JavaScript, or images, then use the [packaged HTML](#deploy-a-packaged-html-file) workflow.
 
 ```
-arweave deploy path-to-my/file.txt
+arweave deploy path-to-my/file.html
 ```
 Once confirmed you'll see a transaction ID and URL
 ```
 Your file is deploying! 🚀,
-Once your file is mined into a block it'll be available on the following URL,
+Once your file is mined into a block it'll be available on the following URL
 
 https://arweave.net/3T261RAQIj2DQmOk1t_zPQnoxVbh5qtMA1-NdzOHKKE
 
-You can check it's status using 'arweave status 3T261RAQIj2DQmOk1t_zPQnoxVbh5qtMA1-NdzOHKKE'
+You can check its status using 'arweave status 3T261RAQIj2DQmOk1t_zPQnoxVbh5qtMA1-NdzOHKKE'
 ```
+
+### Deploy a file with Arweave+IPFS
+
+*This feature is currently experimental.*
+
+To deploy a file with Arweave+IPFS, just add the `--ipfs-publish` flag. After confirming the upload you'll see an ipfs.io link in addition to your arweave.net link.
+
+Deploy will add an `IPFS-Add` tag with the IPFS content hash, e.g. `IPFS-Add:QmcsdfK24i1AijxdX16jNwkDutpbdwD2AGV4JmoBAXYvDj`. This tag tells Arweave nodes running the Arweave+IPFS extension to also make your data available over IPFS, so you'll then be able to access your content from any IPFS gateway, in addition to Arweave nodes and gateways. Pretty cool.
+
+```
+arweave deploy path-to-my/index.html --key-file path/to/arweave-key.json --package --ipfs-publish
+```
+```
+Your file is deploying! 🚀
+Once your file is mined into a block it'll be available on the following URL
+
+https://arweave.net/1ArOtUjQN0G0K9qKiiX5GAoqfJ9ImhY6A71xAiL9lPw
+
+https://ipfs.io/ipfs/QmWfVY9y3xjsixTgbd9AorQxH7VtMpzfx2HaWtsoUYecaX
+
+You can check its status using 'arweave status 1ArOtUjQN0G0K9qKiiX5GAoqfJ9ImhY6A71xAiL9lPw'
+```
+
 
 ### Deploy a packaged HTML file
 
@@ -187,4 +249,30 @@ arweave balance
 ```
 Address: pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI
 Balance: 10.113659492352 AR
+```
+
+### Send AR to another wallet
+
+```
+arweave send <amount_in_ar> <to_arweave_address>
+```
+```
+arweave send 10.5 DAJH66MHqEKImi4Jbuz8V7ZZFPauNGCdbJ0plp5vH8d
+```
+
+```
+Transaction
+
+ID: cuzpWQOqaxkO_TY-wEKoFh5RLgfNgKDhDbO1JAzCoos
+
+To: DAJH66MHqEKImi4Jbuz8V7ZZFPauNGCdbJ0plp5vH8d
+Amount: 10.422000000000 AR
+Fee: 0.000214119475 AR
+Total: 10.422214119475 AR
+
+Wallet
+
+Address: pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI
+Current balance: 11.095252211832 AR
+Balance after uploading: 0.673038092357 AR
 ```

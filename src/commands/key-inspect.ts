@@ -1,6 +1,6 @@
 import { Command } from '../command';
 
-export class KeyInspect extends Command {
+export class KeyInspectCommand extends Command {
 
     public signature = 'key-inspect';
 

@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { Command  } from 'commander';
 import { BalanceCommand } from './commands/balance';
 import { DeployCommand } from './commands/deploy';
+import { SendCommand } from './commands/send';
 import { NetworkInfoCommand } from './commands/network-info';
 import { StatusCommand } from './commands/status';
 
@@ -11,7 +12,8 @@ import { logo } from './ascii';
 import { KeyCreateCommand } from './commands/key-create';
 import { KeyForgetCommand } from './commands/key-forget';
 import { KeySaveCommand } from './commands/key-save';
-import { KeyInspect } from './commands/key-inspect';
+import { KeyExportCommand } from './commands/key-export';
+import { KeyInspectCommand } from './commands/key-inspect';
 import { PackageCommand } from './commands/package';
 import { ServeCommand } from './commands/serve';
 
@@ -32,13 +34,15 @@ const arweave = Arweave.init({
 
 const commands = [
     new DeployCommand(arweave, cwd, log),
+    new SendCommand(arweave, cwd, log),
     new StatusCommand(arweave, cwd, log),
     new BalanceCommand(arweave, cwd, log),
     new NetworkInfoCommand(arweave, cwd, log),
     new KeyCreateCommand(arweave, cwd, log),
     new KeySaveCommand(arweave, cwd, log),
+    new KeyExportCommand(arweave, cwd, log),
     new KeyForgetCommand(arweave, cwd, log),
-    new KeyInspect(arweave, cwd, log),
+    new KeyInspectCommand(arweave, cwd, log),
     new PackageCommand(arweave, cwd, log),
     new ServeCommand(arweave, cwd, log),
 ];
@@ -94,30 +98,30 @@ cli.option('--debug', 'Enable additional logging', (): void => {
     arweave.api.getConfig().logging = true;
 })
 
-commands.forEach(instance => {
+commands.forEach(command => {
 
-    const context = cli.command(instance.getSignature());
+    const instance = cli.command(command.getSignature());
 
-    context.description(instance.getDescription());
+    instance.description(command.getDescription());
 
-    const options = instance.getOptions();
+    const options = command.getOptions();
 
     options.forEach((option) => {
-        context.option(option.signature, option.description, option.action)
+        instance.option(option.signature, option.description, option.action)
     });
 
     /**
      * We need to intercept and manually invoke the handler
      * with the correct context.
      */
-    context.action((...args) => {
+    instance.action((...args) => {
 
         if (cli.debug) {
             log('Loaded config:');
             log(JSON.stringify(arweave.api.getConfig(), null, 4));
         }
 
-        instance.action.apply(instance, [...args])
+        command.action.apply(command, [...args])
         .then(()=>{
             quit(0);
         })
@@ -131,7 +135,7 @@ commands.forEach(instance => {
         });
     });
 
-    instance.setContext(context);
+    command.setContext(instance);
 });
 
 function quit(exitcode = 0) {
@@ -169,6 +173,9 @@ cli.on('--help', function () {
     log('  With a saved key file');
     log('    arweave deploy index.html');
     log('    arweave balance');
+    log('')
+    log('Command specific options and flags:');
+    log(chalk.green('  arweave {command} --help, e.g. arweave deploy --help'));
     log('')
     log('More help:');
     log(chalk.cyan('  https://docs.arweave.org/developers/tools/arweave-deploy\n'));

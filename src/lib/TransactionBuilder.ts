@@ -43,7 +43,12 @@ export function getParser(contentType: string = '*'){
  * @param {PrepareTransactionOptions} [options={}]
  * @returns {Promise<Transaction>}
  */
-export async function buildTransaction(arweave: Arweave, file: File, key: JWKInterface, options: PrepareTransactionOptions = {}): Promise<{parser: ContentParserInterface, transaction: Transaction}>{
+export async function buildTransaction(
+  arweave: Arweave,
+  file: File,
+  key: JWKInterface,
+  options: PrepareTransactionOptions = {}
+): Promise<{ parser: ContentParserInterface; data: Buffer, transaction: Transaction }> {
 
     const {data, contentType, parser} = await parseData(file, options);
 
@@ -59,8 +64,9 @@ export async function buildTransaction(arweave: Arweave, file: File, key: JWKInt
     }
 
     return {
-        parser: parser,
-        transaction: transaction
+        parser,
+        data,
+        transaction
     };
 }
 
@@ -74,7 +80,7 @@ export async function parseData(file: File, options: PrepareTransactionOptions):
     // whatever reason, or the user wants to set another value.
     const contentType = (options.contentType || mime.getType(file.getPath())) || 'application/octet-stream';
 
-    if (!contentType.match('^text/.*$')) {
+    if ((process.env.awd_filter_types !== '0') && !contentType.match('^(text/.*|application/pdf)$')) {
         throw new Error(`Detected content type: ${contentType}\nBETA NOTICE: text/* content types are currently supported, more content types will be supported in future releases.`);
     }
 
