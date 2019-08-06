@@ -11,7 +11,7 @@ import { Source } from '../../lib/inline-source-context';
 import * as WebSocket from 'ws';
 import Arweave from 'arweave/node';
 import { matchRoute, Response } from './router';
-import { initStore } from './store';
+import { initStore, WalletCollection, Wallet } from './store';
 
 export interface Session {
     arweave: Arweave;
@@ -47,6 +47,13 @@ export class ServeCommand extends Command {
     public signature = 'serve <file_path>';
 
     public description = 'Serve a web app';
+
+    public options = [
+        {
+            signature: '--serve-config <path_to_config>',
+            description: 'Serve config',
+        },
+    ];
 
     private wss: WebSocket.Server;
 

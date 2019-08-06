@@ -3,12 +3,21 @@ import { Session } from '.';
 import { onArqlRequest } from './arql';
 import { onProxyRequest } from './proxy';
 import { postTransactionHandler, serveDataHandler, getTxStatusHandler, getTransactionHandler } from './transactions';
+import { getBalanceHandler } from './wallets';
 export interface Response {
     status: number;
     body: string | Buffer;
     headers: OutgoingHttpHeaders;
 }
 export type routeFunction = (request: IncomingMessage, session?: Session) => Promise<Response>;
+
+async function empty(request: IncomingMessage): Promise<Response> {
+    return {
+        status: 200,
+        body: '',
+        headers: {},
+    };
+}
 
 export function matchRoute(path: string): routeFunction {
     // if (path.match(/^\/app$/i)) {
@@ -47,6 +56,12 @@ export function matchRoute(path: string): routeFunction {
         return getTxStatusHandler;
     }
 
+    // Get a wallet balance
+    // /tx/[:id]/status
+    if (path.match(/^\/wallet\/[a-z0-9-_]{43}\/balance$/i)) {
+        return getBalanceHandler;
+    }
+
     // Get a subfield from a transaction
     // // /tx/[:id]/[:field]
     // if (path.match(/^\/tx\/([a-z0-9-_]+)[a-z]+$/i)) {
@@ -57,5 +72,7 @@ export function matchRoute(path: string): routeFunction {
         return onArqlRequest;
     }
 
-    return onProxyRequest;
+    // Proxy all other requests to the network if we don't have a match.
+
+    return empty;
 }

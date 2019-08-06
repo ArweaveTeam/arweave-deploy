@@ -17,7 +17,14 @@ export class FilesystemDriver {
 
     public async init(): Promise<void> {
         if (!(await this.databaseFile.exists())) {
-            this.databaseFile.write(Buffer.from(JSON.stringify({})));
+            this.databaseFile.write(
+                Buffer.from(
+                    JSON.stringify({
+                        transactions: {},
+                        wallets: {},
+                    }),
+                ),
+            );
         }
 
         if (!existsSync(this.transactionsPath)) {
@@ -56,10 +63,14 @@ export class FilesystemDriver {
         return new Transaction(JSON.parse((await file.read()).toString()));
     }
 
-    public async storeTransaction(transaction: Transaction, { height, block }: { height: number; block: string }) {
+    public async storeTransaction(
+        transaction: Transaction,
+        { height, block, from }: { height: number; block: string; from: string },
+    ) {
         this.data[transaction.id] = {
             id: transaction.id,
             created: new Date().toISOString(),
+            from: from,
             block: {
                 id: block,
                 height: height,
