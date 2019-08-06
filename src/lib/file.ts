@@ -1,6 +1,25 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mime from 'mime';
+import * as os from 'os';
+
+/**
+ * Get the path for the arweave app directory, creating it if it doesn't already exist.
+ */
+export function appDirectoryPath(): string {
+
+    const dir = path.resolve(os.homedir(), '.arweave-deploy');
+
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Will throw an exception if we can't read/write
+    fs.accessSync(dir, fs.constants.R_OK | fs.constants.W_OK);
+
+    return dir;
+}
+
 
 export class File {
 
