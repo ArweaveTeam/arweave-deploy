@@ -60,7 +60,9 @@ export class ServeCommand extends Command {
     ];
 
     async action(path: string): Promise<void> {
-        const serveConfig = await loadConfig(new File(this.context.serveConfig, this.cwd));
+        const serveConfig = this.context.serveConfig
+            ? await loadConfig(new File(this.context.serveConfig, this.cwd))
+            : {};
 
         const session: Session = newSession(this.arweave, serveConfig);
 
