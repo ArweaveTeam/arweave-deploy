@@ -1,9 +1,10 @@
-import { ServerResponse, IncomingMessage } from 'http';
+import { IncomingMessage } from 'http';
 import { Response } from './router';
 import Transaction from 'arweave/node/lib/transaction';
 import { saveTransaction, getTransactionMetadata, getTransaction, hasTransaction } from './store';
 import { streamToJson } from './helpers';
 import { Session } from '.';
+import { proxyRequestHandler } from './proxy';
 
 export async function postTransactionHandler(request: IncomingMessage, { arweave }: Session): Promise<Response> {
     try {
@@ -14,7 +15,7 @@ export async function postTransactionHandler(request: IncomingMessage, { arweave
         if (await hasTransaction(transaction.id)) {
             return {
                 status: 208,
-                body: '',
+                body: 'Transaction already processed.',
                 headers: {},
             };
         }
@@ -27,7 +28,7 @@ export async function postTransactionHandler(request: IncomingMessage, { arweave
             console.error(error);
             return {
                 status: 400,
-                body: '',
+                body: 'Transaction verification failed.',
                 headers: {},
             };
         }
@@ -71,6 +72,35 @@ export async function getTransactionHandler(request: IncomingMessage): Promise<R
     }
 }
 
+export async function getTransactionFieldHandler(request: IncomingMessage): Promise<Response> {
+    try {
+        const id = extractTxId(request.url);
+        const field = getTxFieldName(request.url);
+        const tx = await getTransaction(id);
+
+        if (!tx.hasOwnProperty(field)) {
+            return {
+                status: 400,
+                body: '',
+                headers: {},
+            };
+        }
+
+        return {
+            status: 200,
+            body: tx[field],
+            headers: {},
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            status: 404,
+            body: '',
+            headers: {},
+        };
+    }
+}
+
 export async function getTxStatusHandler(request: IncomingMessage, { arweave }: Session): Promise<Response> {
     try {
         const id = extractTxId(request.url);
@@ -99,19 +129,24 @@ export async function getTxStatusHandler(request: IncomingMessage, { arweave }: 
     }
 }
 
-export async function serveDataHandler(request: IncomingMessage): Promise<Response> {
+export async function serveDataHandler(request: IncomingMessage, session: Session): Promise<Response> {
     try {
         const id = extractTxId(request.url);
-        const tx = await getTransaction(id);
-        const meta = await getTransactionMetadata(id);
 
-        return {
-            status: 200,
-            body: Buffer.from(tx.get('data', { decode: true, string: false })),
-            headers: {
-                'Content-Type': meta.tags['Content-Type'],
-            },
-        };
+        if (hasTransaction(id)) {
+            const tx = await getTransaction(id);
+            const meta = await getTransactionMetadata(id);
+
+            return {
+                status: 200,
+                body: Buffer.from(tx.get('data', { decode: true, string: false })),
+                headers: {
+                    'Content-Type': meta.tags['Content-Type'],
+                },
+            };
+        } else {
+            return proxyRequestHandler(request, session);
+        }
     } catch (error) {
         console.error(error);
         return {
@@ -122,7 +157,12 @@ export async function serveDataHandler(request: IncomingMessage): Promise<Respon
     }
 }
 
-function extractTxId(string: string): string {
+function extractTxId(url: string): string {
     const txIdRegex = /([a-z0-9-_]{43})/i;
-    return string.match(txIdRegex)[1];
+    return url.match(txIdRegex)[1];
+}
+
+function getTxFieldName(url: string): string {
+    const fieldRegex = /[a-z0-9-_]{43}\/([a-z0-9]+)?$/i;
+    return url.match(fieldRegex)[1];
 }

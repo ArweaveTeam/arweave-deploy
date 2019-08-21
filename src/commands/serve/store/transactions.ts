@@ -1,7 +1,8 @@
 import { existsSync, mkdirSync, accessSync, constants } from 'fs';
-import { TxMetadataCollection, TxMetadata, formatTags } from '.';
+import { TxMetadataCollection, TxMetadata, TxMetadataTags } from '.';
 import Transaction from 'arweave/node/lib/transaction';
 import { File } from '../../../lib/file';
+import { getSenderAddress } from '../helpers';
 
 export class FilesystemDriver {
     protected databaseFile: File;
@@ -63,19 +64,16 @@ export class FilesystemDriver {
         return new Transaction(JSON.parse((await file.read()).toString()));
     }
 
-    public async storeTransaction(
-        transaction: Transaction,
-        { height, block, from }: { height: number; block: string; from: string },
-    ) {
+    public async storeTransaction(transaction: Transaction, { height, block }: { height: number; block: string }) {
         this.data[transaction.id] = {
             id: transaction.id,
             created: new Date().toISOString(),
-            from: from,
+            from: await getSenderAddress(transaction),
             block: {
                 id: block,
                 height: height,
             },
-            tags: formatTags(transaction),
+            tags: await formatTags(transaction),
         };
 
         await Promise.all([this.commitDatabase(), this.commitTransaction(transaction)]);
@@ -89,4 +87,53 @@ export class FilesystemDriver {
         const file = new File(`${transaction.id}.json`, this.transactionsPath);
         await file.write(Buffer.from(JSON.stringify(transaction)));
     }
+}
+
+/**
+ * Take a regular arweave transaction object and extract the tags,
+ * decode them, and reduce the tags into a more efficient format
+ * for search and storage.
+ *
+ * From: (all names and values base64 encoded)
+ * [
+ *   {"name": "some-tag", value: "value-a"},
+ *   {"name": "some-tag", value: "value-b"},
+ *   {"name": "some-other-tag", value: "some-other-value"}
+ * ]
+ *
+ * To: (all names and values utf8 strings)
+ * {
+ *   "some-tag": ["value-a","value-b"],
+ *   "some-other-tag": ["some-other-value"]
+ * }
+ *
+ * @param {Transaction} transaction
+ * @returns {TxMetadataTags}
+ */
+async function formatTags(transaction: Transaction): Promise<TxMetadataTags> {
+    const tags: { [key: string]: string[] } = {};
+
+    const from = await getSenderAddress(transaction);
+
+    transaction.tags.reduce((reduced, tag) => {
+        const key = tag.get('name', { decode: true, string: true });
+        const value = tag.get('value', { decode: true, string: true });
+
+        if (reduced[key]) {
+            reduced[key].push(value);
+            return reduced;
+        }
+
+        reduced[key] = [value];
+
+        return reduced;
+    }, tags);
+
+    tags.from = [from];
+
+    if (transaction.target) {
+        tags.to = [transaction.target];
+    }
+
+    return tags;
 }

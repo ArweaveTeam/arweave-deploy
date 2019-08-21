@@ -3,7 +3,7 @@ import { appDirectoryPath } from '../../../lib/file';
 import Transaction from 'arweave/node/lib/transaction';
 import Arweave from 'arweave/node';
 import { FilesystemDriver } from './transactions';
-import { ownerToAddress } from '../helpers';
+import { ownerToAddress, getSenderAddress } from '../helpers';
 import { MemoryDriver } from './wallets';
 
 export interface TxMetadataCollection {
@@ -45,7 +45,6 @@ export async function initStore(arweaveInstance: Arweave, devWallets: WalletColl
     transactions = new FilesystemDriver(resolve(appDirectoryPath(), 'txs.json'), resolve(appDirectoryPath(), 'txs'));
     wallets = new MemoryDriver(devWallets);
 
-    console.log(wallets);
     await transactions.init();
 }
 
@@ -75,52 +74,16 @@ export async function hasWallet(address: string): Promise<Boolean> {
 
 export async function saveTransaction(transaction: Transaction) {
     const networkInfo = await arweave.network.getInfo();
-    const fromAddress = await ownerToAddress(transaction.owner);
+    const fromAddress = await getSenderAddress(transaction);
+
+    const wallet = await wallets.getWallet(fromAddress);
+
+    const balance = arweave.ar.sub(wallet.balance, arweave.ar.add(transaction.reward, transaction.quantity));
 
     await transactions.storeTransaction(transaction, {
         block: networkInfo.current,
         height: networkInfo.height,
-        from: fromAddress,
     });
-}
 
-/**
- * Take a regular arweave transaction object and extract the tags,
- * decode them, and reduce the tags into a more efficient format
- * for search and storage.
- *
- * From: (all names and values base64 encoded)
- * [
- *   {"name": "some-tag", value: "value-a"},
- *   {"name": "some-tag", value: "value-b"},
- *   {"name": "some-other-tag", value: "some-other-value"}
- * ]
- *
- * To: (all names and values utf8 strings)
- * {
- *   "some-tag": ["value-a","value-b"],
- *   "some-other-tag": ["some-other-value"]
- * }
- *
- * @param {Transaction} transaction
- * @returns {TxMetadataTags}
- */
-export function formatTags(transaction: Transaction): TxMetadataTags {
-    const tags: { [key: string]: string[] } = {};
-
-    transaction.tags.reduce((reduced, tag) => {
-        const key = tag.get('name', { decode: true, string: true });
-        const value = tag.get('value', { decode: true, string: true });
-
-        if (reduced[key]) {
-            reduced[key].push(value);
-            return reduced;
-        }
-
-        reduced[key] = [value];
-
-        return reduced;
-    }, tags);
-
-    return tags;
+    await wallets.updateWallet(fromAddress, { last_tx: transaction.id, balance: balance });
 }

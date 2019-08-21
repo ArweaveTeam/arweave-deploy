@@ -3,7 +3,7 @@ import { Session } from '.';
 import { Response } from './router';
 import { readIncomingMessageData } from './helpers';
 
-export async function onProxyRequest(request: IncomingMessage, { arweave, log }: Session): Promise<Response> {
+export async function proxyRequestHandler(request: IncomingMessage, { arweave, log }: Session): Promise<Response> {
     const data = await readIncomingMessageData(request);
 
     try {

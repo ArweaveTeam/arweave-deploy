@@ -1,6 +1,4 @@
-import { formatTags, Wallet, WalletCollection } from '.';
-import Transaction from 'arweave/node/lib/transaction';
-import { File } from '../../../lib/file';
+import { Wallet, WalletCollection } from '.';
 
 export class MemoryDriver {
     protected data: WalletCollection;
@@ -10,16 +8,14 @@ export class MemoryDriver {
     }
 
     public async hasWallet(address: string): Promise<boolean> {
-        console.log('data', this.data, this.data.hasOwnProperty(address));
         return this.data.hasOwnProperty(address);
     }
 
     public async getWallet(address: string): Promise<Wallet> {
-        console.log('fetching wallet', address);
         return this.data[address];
     }
 
-    protected async updateWallet(
+    public async updateWallet(
         address: string,
         { balance, last_tx }: { balance: string; last_tx: string },
     ): Promise<void> {

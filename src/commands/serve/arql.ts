@@ -2,6 +2,8 @@ import { IncomingMessage } from 'http';
 import { getAllMetadata, TxMetadataCollection } from './store';
 import { Response } from './router';
 import { readIncomingMessageData } from './helpers';
+import Arweave from 'arweave/node';
+import { Session } from '.';
 
 type ArqlQuery = ArqlBooleanQuery | ArqlTagMatch;
 
@@ -19,7 +21,7 @@ interface ArqlBooleanQuery {
 
 type ArqlResultSet = string[];
 
-export async function onArqlRequest(request: IncomingMessage): Promise<Response> {
+export async function arqlRequestHandler(request: IncomingMessage, { arweave, config }: Session): Promise<Response> {
     const body = (await readIncomingMessageData(request)).toString();
 
     try {
@@ -44,20 +46,41 @@ export async function onArqlRequest(request: IncomingMessage): Promise<Response>
 
     const metadata = await getAllMetadata();
 
-    const results = await arqlSearch(query, metadata);
+    const localResults = await arqlSearch(query, metadata);
+
+    if (config.arql && config.arql.mergeExternal) {
+        const liveResults = await liveQuery(arweave, query);
+
+        const merged = [...new Set(localResults.concat(liveResults))];
+
+        return {
+            status: 200,
+            body: JSON.stringify(merged),
+            headers: {},
+        };
+    }
 
     return {
         status: 200,
-        body: JSON.stringify(results),
+        body: JSON.stringify(localResults),
         headers: {},
     };
+}
+
+async function liveQuery(arweave: Arweave, query: ArqlQuery) {
+    const results = await arweave.api.post('arql', query);
+    if (results.data) {
+        return results.data;
+    }
+
+    return [];
 }
 
 export async function arqlSearch(query: ArqlQuery | ArqlTagMatch, data: TxMetadataCollection): Promise<ArqlResultSet> {
     if (query.op == 'equals') {
         return Object.values(data)
             .filter(record => {
-                return record.tags[query.expr1] && record.tags[query.expr1].includes(query.expr2);
+                return record.tags.hasOwnProperty(query.expr1) && record.tags[query.expr1].includes(query.expr2);
             })
             .map(record => record.id);
     }

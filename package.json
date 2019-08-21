@@ -6,27 +6,27 @@
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/mime": "^2.0.0",
-    "@types/mocha": "^5.2.6",
-    "@types/node": "^10.14.4",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^10.14.13",
     "@types/promptly": "^1.1.28",
     "arweave": "github:arweaveteam/arweave-js#4a6b820fa74f0a8f98e7cbe70fcc95f372a95820",
     "axios": "^0.19.0",
     "chai": "^4.2.0",
-    "commander": "^2.19.0",
-    "inline-source": "^6.1.9",
+    "commander": "^2.20.0",
+    "inline-source": "^6.2.0",
     "ipfs-unixfs": "^0.1.16",
     "ipld-dag-pb": "^0.17.4",
-    "mime": "^2.4.0",
+    "mime": "^2.4.4",
     "mocha": "^5.2.0",
-    "nexe": "^3.0.0-beta.10",
-    "prettier": "^1.16.4",
+    "nexe": "^3.3.2",
+    "prettier": "^1.18.2",
     "promptly": "^3.0.3",
-    "ts-loader": "^5.3.3",
+    "ts-loader": "^5.4.5",
     "ts-node": "^7.0.1",
-    "typescript": "^3.3.4000",
-    "webpack": "^4.29.6",
+    "typescript": "^3.5.3",
+    "webpack": "^4.36.1",
     "webpack-bundle-analyzer": "^3.3.2",
-    "webpack-cli": "^3.3.0",
+    "webpack-cli": "^3.3.6",
     "webpack-merge": "^4.2.1"
   },
   "scripts": {
@@ -55,15 +55,12 @@
     "url": "https://github.com/ArweaveTeam/arweave-deploy/issues"
   },
   "homepage": "https://www.arweave.org/hosting.html",
-  "dependencies": {
-    "@types/ws": "^6.0.1",
-    "ws": "^6.2.0"
-  },
+  "dependencies": {},
   "prettier": {
     "trailingComma": "all",
     "tabWidth": 4,
-    "semi": false,
     "singleQuote": true,
-    "parser": "typescript"
+    "parser": "typescript",
+    "printWidth": 120
   }
 }

@@ -1,17 +1,16 @@
 import { Command } from '../../command';
 import { File } from '../../lib/file';
-import { resolve } from 'path';
 import chalk from 'chalk';
 import { logo } from '../../ascii';
-import { IncomingMessage, ServerResponse, createServer } from 'http';
+import { IncomingMessage, ServerResponse, createServer, Server } from 'http';
 import { HtmlParser } from '../../parsers/text-html';
 import { watch } from 'fs';
 
 import { Source } from '../../lib/inline-source-context';
-import * as WebSocket from 'ws';
 import Arweave from 'arweave/node';
-import { matchRoute, Response } from './router';
-import { initStore, WalletCollection, Wallet } from './store';
+import { httpRequestHandler } from './router';
+import { initStore } from './store';
+import { getDevWallets, loadConfig, ServeConfig } from './config';
 
 export interface Session {
     arweave: Arweave;
@@ -21,6 +20,7 @@ export interface Session {
     build: Build | null;
     log: Function;
     input: File | null;
+    config: ServeConfig;
 }
 
 interface Build {
@@ -46,276 +46,61 @@ interface BuildInfo {
 export class ServeCommand extends Command {
     public signature = 'serve <file_path>';
 
-    public description = 'Serve a web app';
+    public description = 'Serve a web app using the Arweave deploy dev server';
 
     public options = [
         {
             signature: '--serve-config <path_to_config>',
             description: 'Serve config',
         },
+        {
+            signature: '--package',
+            description: 'Package and optimise JS + CSS assets',
+        },
     ];
 
-    private wss: WebSocket.Server;
+    async action(path: string): Promise<void> {
+        const serveConfig = await loadConfig(new File(this.context.serveConfig, this.cwd));
 
-    private session: Session = {
-        arweave: this.arweave,
-        status: {
-            buildInProgress: false,
-        },
-        log: this.consoleLog,
-        input: null,
-        build: null,
-    };
+        const session: Session = newSession(this.arweave, serveConfig);
 
-    async action(path: string) {
         const inputFile = new File(path, this.cwd);
 
         if (!inputFile.exists()) {
             throw new Error(`File not found: ${path}`);
         }
 
-        this.session.log(`Watching application directory for changes: ${inputFile.getDirectory()}`);
+        session.log(`Watching application directory for changes: ${inputFile.getDirectory()}`);
+
+        await initStore(this.arweave, getDevWallets(serveConfig));
+
+        const server = createHttpServer(serveConfig.port || 1984, session);
 
         watch(inputFile.getDirectory(), { recursive: true }, (event: string, filename: string) => {
-            this.session.log(`File changed: ${filename}`);
+            session.log(`File changed: ${filename}`);
 
-            if (!this.session.status.buildInProgress) {
-                this.startBuild(inputFile);
+            if (!session.status.buildInProgress) {
+                startBuild(inputFile, !!this.context.package, session);
             }
         });
-
-        const port = 1984;
 
         this.arweave.api.config.logging = true;
 
         this.arweave.api.config.logger = (message: string) => {
-            this.session.log(`[request proxy] ${message}`);
+            session.log(`[request proxy] ${message}`);
         };
 
-        await initStore(this.arweave);
-
-        const server = createServer((request: IncomingMessage, response: ServerResponse): void => {
-            this.onRequest(inputFile, request, response);
-        });
-
-        this.wss = new WebSocket.Server({ port: 1985, server: server });
-
-        this.wss.on('connection', (ws: WebSocket) => {
-            ws.on('message', (message: WebSocket.Data) => {
-                this.wsOnMessage(ws, message);
-            });
-            ws.on('error', (error: Error) => {
-                this.session.log('ws:error', { error: error });
-            });
-        });
-
-        server.on('error', (error: Error) => {
-            this.session.log('Error!', { error: error });
-        });
-
-        server.on('listening', () => {
-            this.showStartupInfo(port);
-        });
-
-        server.listen(port);
-
-        this.startBuild(inputFile);
+        startBuild(inputFile, !!this.context.package, session);
 
         await new Promise(resolve => {
             server.on('close', () => {
-                this.session.log('Stopping server...');
+                session.log('Stopping server...');
                 resolve();
             });
         });
     }
 
-    protected async wsPush(message: any, ws?: WebSocket) {
-        console.log('wsPush:message', message);
-        if (ws) {
-            ws.send(JSON.stringify(message));
-            return;
-        }
-        this.wss.clients.forEach((ws: WebSocket) => {
-            ws.send(JSON.stringify(message));
-        });
-    }
-
-    protected async wsOnMessage(ws: WebSocket, message: WebSocket.Data): Promise<void> {
-        let request = JSON.parse(<string>message);
-        if (request.action == 'build.get') {
-            await this.wsPush({
-                action: 'build.new',
-                data: this.session.build ? this.session.build.report : {},
-            });
-        }
-    }
-
-    protected async onRequest(inputFile: File, request: IncomingMessage, response: ServerResponse): Promise<void> {
-        this.session.log(`[request] ${request.url}`);
-
-        const route = matchRoute(request.url);
-
-        console.log(route);
-
-        if (route) {
-            const routeResponse = await route.apply(this, [request, this.session]);
-
-            response.writeHead(routeResponse.status, routeResponse.headers);
-            response.write(routeResponse.body);
-            response.end();
-            this.session.log(`[response]  ${routeResponse.status} - ${routeResponse.body.length} bytes`);
-        }
-    }
-
-    protected async startBuild(inputFile: File): Promise<void> {
-        this.session.status.buildInProgress = true;
-        try {
-            this.session.log(`Starting build...`);
-            this.wsPush({ action: 'build.starting' });
-            this.session.build = await this.newBuild(inputFile);
-            this.session.log(`Build complete!`);
-            this.wsPush({ action: 'build.new' });
-        } catch (error) {
-            this.session.status.buildInProgress = false;
-            this.session.log(`Build error: ${error}`);
-            throw error;
-        }
-        this.session.status.buildInProgress = false;
-    }
-
-    protected async onAppServeRequest(request: IncomingMessage, session?: Session): Promise<Response> {
-        try {
-            console.log('this', this);
-            const assetsDir = resolve('./src/assets/');
-            const reloadScript = new File('inject.js', assetsDir);
-            const reloadSrc = await reloadScript.read();
-
-            const appSrc = this.session.build ? this.session.build.output : Buffer.from('');
-
-            return {
-                status: 200,
-                headers: {
-                    'Content-Type': 'text/html',
-                },
-                body: Buffer.concat([appSrc, reloadSrc]),
-            };
-        } catch (error) {
-            this.wsPush({ action: 'build.failed' });
-            this.log(`Failed to process file: ${session.input.getPath()}`);
-            this.log(error);
-        }
-    }
-
-    protected async newBuild(inputFile: File): Promise<Build> {
-        const packaged = await new HtmlParser().build(inputFile, {
-            package: true,
-        });
-        const output = Buffer.from(packaged.html);
-
-        this.session.log(`Successfully built: ${inputFile.getPath()}`, {
-            data: {
-                type: 'text/html',
-                size: File.bytesForHumans(output.byteLength),
-                bytes: output.byteLength,
-            },
-        });
-
-        return {
-            output: output,
-            report: {
-                timestamp: Date.now(),
-                entry: {
-                    name: inputFile.getName(),
-                    path: inputFile.getPath(),
-                    size: {
-                        bytes: (await inputFile.info()).size,
-                    },
-                },
-                size: {
-                    bytes: output.byteLength,
-                },
-                sources: packaged.sources,
-            },
-        };
-    }
-
-    protected async onBuildAPIRequest(
-        inputFile: File,
-        request: IncomingMessage,
-        response: ServerResponse,
-        session?: Session,
-    ): Promise<Response> {
-        return {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: Buffer.from(
-                JSON.stringify(this.session.build || {}, (key: any, value: any) => {
-                    if (value instanceof Error) {
-                        return value.message;
-                    }
-                    return value;
-                }),
-            ),
-        };
-    }
-
-    protected async onBuildUIRequest(
-        inputFile: File,
-        request: IncomingMessage,
-        response: ServerResponse,
-        session?: Session,
-    ): Promise<Response> {
-        const assetsDir = resolve('./src/assets/');
-
-        const uiFile = new File('ui.html', assetsDir);
-
-        const uiSrc = await uiFile.read();
-
-        return {
-            status: 200,
-            headers: {
-                'Content-Type': 'text/html',
-            },
-            body: uiSrc,
-        };
-    }
-
-    protected async onFaviconRequest(
-        inputFile: File,
-        request: IncomingMessage,
-        response: ServerResponse,
-        session?: Session,
-    ): Promise<Response> {
-        const assetsDir = resolve('./src/assets/');
-
-        const icon = new File('favicon.ico', assetsDir);
-
-        const data = await icon.read();
-
-        const contentType = await icon.getType();
-
-        return {
-            status: 200,
-            headers: {
-                'Content-Type': contentType,
-            },
-            body: data,
-        };
-    }
-
-    protected consoleLog(message: string, additional: { error?: Error; data?: any } = {}): void {
-        console.log(`${new Date().toISOString().substr(11, 8)} [arweave serve] ${message}`);
-        if (additional.data) {
-            console.log(additional.data);
-        }
-        if (additional.error) {
-            console.error(additional.error);
-        }
-    }
-
-    protected showStartupInfo(port: number | string) {
+    protected showStartupInfo(port: number) {
         this.print([
             chalk.cyan(logo()),
             ``,
@@ -326,7 +111,7 @@ export class ServeCommand extends Command {
             chalk.cyanBright(` - http://localhost:${port}`),
             ``,
             `Your application`,
-            chalk.cyanBright(` - http://localhost:${port}/develop`),
+            chalk.cyanBright(` - http://localhost:${port}/app`),
             ``,
             `Server ready and waiting for connections...`,
             ``,
@@ -335,5 +120,75 @@ export class ServeCommand extends Command {
             `Need help?`,
             chalk.cyan(`https://docs.arweave.org/developers/tools/arweave-deploy/development-server`),
         ]);
+    }
+}
+
+function newSession(arweave: Arweave, config: ServeConfig): Session {
+    return {
+        arweave: arweave,
+        status: {
+            buildInProgress: false,
+        },
+        log: (message: string, additional: { error?: Error; data?: any } = {}): void => {
+            console.log(`${new Date().toISOString().substr(11, 8)} [arweave serve] ${message}`);
+            if (additional.data) {
+                console.log(additional.data);
+            }
+            if (additional.error) {
+                console.error(additional.error);
+            }
+        },
+        input: null,
+        build: null,
+        config: config,
+    };
+}
+
+function createHttpServer(port: number, session: Session): Server {
+    const server = createServer((request: IncomingMessage, response: ServerResponse): void => {
+        httpRequestHandler(request, response, session);
+    });
+
+    server.listen(port);
+
+    return server;
+}
+
+async function createBuild(inputFile: File, enablePackaging: boolean): Promise<Build> {
+    const packaged = await new HtmlParser().build(inputFile, {
+        package: enablePackaging,
+    });
+
+    const output = Buffer.from(packaged.html);
+
+    return {
+        output: output,
+        report: {
+            timestamp: Date.now(),
+            entry: {
+                name: inputFile.getName(),
+                path: inputFile.getPath(),
+                size: {
+                    bytes: (await inputFile.info()).size,
+                },
+            },
+            size: {
+                bytes: output.byteLength,
+            },
+            sources: packaged.sources,
+        },
+    };
+}
+
+async function startBuild(inputFile: File, enablePackaging: boolean, session: Session): Promise<void> {
+    session.status.buildInProgress = true;
+    try {
+        session.log(`Starting build...`);
+        session.build = await createBuild(inputFile, enablePackaging);
+        session.log(`Successfully built: ${inputFile.getPath()}`);
+    } catch (error) {
+        session.log(`Build error: ${error}`);
+    } finally {
+        session.status.buildInProgress = false;
     }
 }
