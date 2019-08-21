@@ -15,6 +15,7 @@ import { KeySaveCommand } from './commands/key-save';
 import { KeyExportCommand } from './commands/key-export';
 import { KeyInspectCommand } from './commands/key-inspect';
 import { PackageCommand } from './commands/package';
+import { ServeCommand } from './commands/serve';
 
 declare var __VERSION__: string;
 
@@ -43,6 +44,7 @@ const commands = [
     new KeyForgetCommand(arweave, cwd, log),
     new KeyInspectCommand(arweave, cwd, log),
     new PackageCommand(arweave, cwd, log),
+    new ServeCommand(arweave, cwd, log),
 ];
 
 const cli = new Command;
@@ -52,13 +54,28 @@ cli.option('-v --version', 'Show the version number', (): void => {
     quit(0);
 });
 
-cli.option('--protocol <protocol>', 'Set the protocol to use (http or https)', (protocol: string): void => {
-    arweave.api.getConfig().protocol = protocol;
-})
+cli.option(
+    '--host <hostname_or_ip>',
+    'Set the network hostname to use',
+    (host: string): void => {
+        arweave.api.getConfig().host = host
+        /**
+         * Arguments are parsed in the order they're defined here, so if the user changes the hostname away
+         * from the default (arweave.net), then we should reset the protocol and port to the network
+         * defaults.
+         */
+        arweave.api.getConfig().protocol = 'http'
+        arweave.api.getConfig().port = '1984'
+    },
+)
 
-cli.option('--host <hostname_or_ip>', 'Set the network hostname to use', (host: string): void => {
-    arweave.api.getConfig().host = host;
-})
+cli.option(
+    '--protocol <protocol>',
+    'Set the protocol to use (http or https)',
+    (protocol: string): void => {
+        arweave.api.getConfig().protocol = protocol
+    },
+)
 
 cli.option('--port <port_number>', 'Set the network port to use', (port: string): void => {
     arweave.api.getConfig().port = port;

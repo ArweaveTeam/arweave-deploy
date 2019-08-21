@@ -1,6 +1,25 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mime from 'mime';
+import * as os from 'os';
+
+/**
+ * Get the path for the arweave app directory, creating it if it doesn't already exist.
+ */
+export function appDirectoryPath(): string {
+
+    const dir = path.resolve(os.homedir(), '.arweave-deploy');
+
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Will throw an exception if we can't read/write
+    fs.accessSync(dir, fs.constants.R_OK | fs.constants.W_OK);
+
+    return dir;
+}
+
 
 export class File {
 
@@ -12,12 +31,21 @@ export class File {
         this.base = base;
     }
 
-    public getType(){
+    public getType(): string {
         return mime.getType(this.getPath()) || 'application/octet-stream'
     }
 
-    public getBase(){
+    public getBase(): string{
         return this.base;
+    }
+
+    /**
+     * Get the file name
+     *
+     * @memberof File
+     */
+    public getName({extension} = {extension: true}): string {
+        return extension ? path.basename(this.path) : path.basename(this.path, path.extname(this.path))
     }
 
     /**
@@ -26,7 +54,7 @@ export class File {
      * @returns
      * @memberof File
      */
-    public getPath() {
+    public getPath(): string {
         return this.base ? path.resolve(this.base, this.path) : this.path;
     }
 
@@ -36,7 +64,7 @@ export class File {
      * @returns
      * @memberof File
      */
-    public getDirectory() {
+    public getDirectory(): string {
         return path.dirname(this.getPath());
     }
 
@@ -96,7 +124,7 @@ export class File {
         });
     }
 
-    public delete(): Promise<fs.Stats> {
+    public delete(): Promise<void> {
         return new Promise((resolve, reject) => {
             fs.unlink(this.getPath(), (error: Error) => {
                 if (error) {

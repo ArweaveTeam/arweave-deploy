@@ -14,5 +14,8 @@
     ],
     "exclude": [
         "node_modules",
+    ],
+    "files": [
+        "untyped-modules.d.ts"
     ]
 }

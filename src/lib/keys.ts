@@ -3,7 +3,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { File } from "./file";
+import { File, appDirectoryPath } from "./file";
 
 export function validateKeyComponents(obj: any): void {
 
@@ -133,22 +133,6 @@ export async function forget(): Promise<void> {
 }
 
 
-/**
- * Get the path for the arweave app directory, creating it if it doesn't already exist.
- */
-function appDirectoryPath(): string {
-
-    const dir = path.resolve(os.homedir(), '.arweave-deploy');
-
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-
-    // Will throw an exception if we can't read/write
-    fs.accessSync(dir, fs.constants.R_OK | fs.constants.W_OK);
-
-    return dir;
-}
 
 function keyFilePath(): string {
     return path.resolve(appDirectoryPath(), 'key.json');
