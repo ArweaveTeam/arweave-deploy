@@ -68,6 +68,8 @@ export class ServeCommand extends Command {
 
         const inputFile = new File(path, this.cwd);
 
+        const port = serveConfig.port || 1984;
+
         if (!inputFile.exists()) {
             throw new Error(`File not found: ${path}`);
         }
@@ -76,7 +78,7 @@ export class ServeCommand extends Command {
 
         await initStore(this.arweave, getDevWallets(serveConfig));
 
-        const server = createHttpServer(serveConfig.port || 1984, session);
+        const server = createHttpServer(port, session);
 
         watch(inputFile.getDirectory(), { recursive: true }, (event: string, filename: string) => {
             session.log(`File changed: ${filename}`);
@@ -94,6 +96,8 @@ export class ServeCommand extends Command {
 
         startBuild(inputFile, !!this.context.package, session);
 
+        this.showStartupInfo(port);
+
         await new Promise(resolve => {
             server.on('close', () => {
                 session.log('Stopping server...');
@@ -107,9 +111,9 @@ export class ServeCommand extends Command {
             chalk.cyan(logo()),
             ``,
             ``,
-            `Arweave local development server`,
+            `Arweave Deploy Dev Server`,
             ``,
-            `Arweave API proxy:`,
+            `Arweave API:`,
             chalk.cyanBright(` - http://localhost:${port}`),
             ``,
             `Your application`,
@@ -120,7 +124,7 @@ export class ServeCommand extends Command {
             `Now let's build something great! 🚀`,
             ``,
             `Need help?`,
-            chalk.cyan(`https://docs.arweave.org/developers/tools/arweave-deploy/development-server`),
+            chalk.cyan(`https://github.com/arweaveTeam/arweave-deploy`),
         ]);
     }
 }
