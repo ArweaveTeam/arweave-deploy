@@ -33,6 +33,7 @@ const arweave = Arweave.init({
 
 const commands = [
     new DeployCommand(arweave, cwd, log),
+    new ServeCommand(arweave, cwd, log),
     new SendCommand(arweave, cwd, log),
     new StatusCommand(arweave, cwd, log),
     new BalanceCommand(arweave, cwd, log),
@@ -43,7 +44,6 @@ const commands = [
     new KeyForgetCommand(arweave, cwd, log),
     new KeyInspectCommand(arweave, cwd, log),
     new PackageCommand(arweave, cwd, log),
-    new ServeCommand(arweave, cwd, log),
 ];
 
 const cli = new Command();
@@ -168,7 +168,7 @@ cli.on('--help', function() {
     log(chalk.green('  arweave {command} --help, e.g. arweave deploy --help'));
     log('');
     log('More help:');
-    log(chalk.cyan('  https://docs.arweave.org/developers/tools/arweave-deploy\n'));
+    log(chalk.cyan('  https://github.com/arweaveTeam/arweave-deploy\n'));
 });
 
 // error on unknown commands
