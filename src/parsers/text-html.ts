@@ -98,7 +98,7 @@ const importRemoteImages = async (entry: File, source: Source, context: any, log
 const importCssUrls = async (entry: File, source: Source, context: any, logger: Function): Promise<void> =>  {
 
     let css = source.fileContent as string;
-    let output = `<style>\n${css}\n</style>`;
+    let output = css;
 
     const urlRegexGlobal = /.*url\(([^\)]+)\).*/gi;
 
@@ -201,7 +201,9 @@ const importCssUrls = async (entry: File, source: Source, context: any, logger: 
         }
     }
 
-    source.content = output;
+    if (output !== css) {
+        source.content = `<style>\n${output}\n</style>`
+    }
 }
 
 async function downloadRemote(url: string): Promise<{data: Buffer, type: string}>{
