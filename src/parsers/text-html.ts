@@ -202,7 +202,7 @@ const importCssUrls = async (entry: File, source: Source, context: any, logger: 
     }
 
     if (output !== css) {
-        source.content = `<style>\n${output}\n</style>`
+        source.replace = `<style>\n${output}\n</style>`
     }
 }
 
