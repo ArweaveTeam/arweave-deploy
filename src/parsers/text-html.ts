@@ -82,7 +82,7 @@ const importCssUrls = async (source: any, context: any, logger: Function): Promi
     }
 
     if (output !== css) {
-        source.content = `<style>\n${output}\n</style>`
+        source.replace = `<style>\n${output}\n</style>`
     }
 
 }
