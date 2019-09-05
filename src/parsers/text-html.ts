@@ -49,7 +49,7 @@ const importRemoteImages = async (source: any, context: any, logger: Function): 
 const importCssUrls = async (source: any, context: any, logger: Function): Promise<void> =>  {
 
     let css = source.fileContent as string;
-    let output = `<style>\n${css}\n</style>`;
+    let output = css;
 
     const urlRegexGlobal = /.*url\(([^\)]+)\).*/gi;
 
@@ -81,7 +81,9 @@ const importCssUrls = async (source: any, context: any, logger: Function): Promi
         output = output.replace(cssUrl, `data:${resource.getType()};base64,${base64Resource}`)
     }
 
-    source.content = output;
+    if (output !== css) {
+        source.content = `<style>\n${output}\n</style>`
+    }
 
 }
 
