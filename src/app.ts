@@ -139,11 +139,11 @@ process.on('uncaughtException', function (error: Error) {
     quit(1);
 });
 
-process.on('unhandledRejection', (reason, p) => {
-    log(chalk.redBright(reason));
-    if (cli.debug && reason.stack) {
+process.on('unhandledRejection', (error: Error, p) => {
+    log(chalk.redBright(error.message));
+    if (cli.debug && error.stack) {
         log(chalk.redBright(''));
-        log(reason.stack);
+        log(error.stack);
     }
     quit(1);
 });
