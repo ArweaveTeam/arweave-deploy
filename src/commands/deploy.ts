@@ -103,7 +103,7 @@ export class DeployCommand extends Command {
             transaction.addTag('IPFS-Add', ipfsCid);
         }
         
-        this.arweave.transactions.sign(transaction, key);
+        await this.arweave.transactions.sign(transaction, key);
 
         const address = await this.arweave.wallets.jwkToAddress(key);
 
@@ -133,7 +133,7 @@ export class DeployCommand extends Command {
             })(),
             `Price: ${this.formatWinston(transaction.reward)}`,
             `\nTags:\n\n${this.formatTags(transaction)}`,
-            `\nWallet\n`,
+            `From Wallet\n`,
             `Address: ${address}`,
             `Current balance: ${this.formatWinston(balance)}`,
             `Balance after uploading: ${this.formatWinston(balanceAfter)}`,
@@ -151,7 +151,7 @@ export class DeployCommand extends Command {
                 throw new Error(`User cancelled`);
             }
         }
-        
+
         /**
          * Axios still haven't produced a release where the deprecated
          * buffer constructor issue has been fixed, so we need to manually
@@ -183,7 +183,6 @@ export class DeployCommand extends Command {
             `You can check its status using 'arweave status ${transaction.id}'
         `]);
 
-        
     }
 
     /**
