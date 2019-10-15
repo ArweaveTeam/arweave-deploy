@@ -1,23 +1,24 @@
 # Arweave Deploy
 
-- [Arweave Deploy](#Arweave-Deploy)
-  - [Build](#Build)
-    - [Build for local Node.js](#Build-for-local-Nodejs)
-    - [Build portable binaries](#Build-portable-binaries)
-  - [Installation](#Installation)
-    - [NPM (recommended)](#NPM-recommended)
-    - [Manual](#Manual)
-  - [Quick Start](#Quick-Start)
-  - [Usage](#Usage)
-    - [Deploy a file](#Deploy-a-file)
-    - [Deploy a file with Arweave+IPFS](#Deploy-a-file-with-ArweaveIPFS)
-    - [Deploy a packaged HTML file](#Deploy-a-packaged-HTML-file)
-    - [Check a deployment status](#Check-a-deployment-status)
-    - [Load your keyfile](#Load-your-keyfile)
-    - [Generate a keyfile](#Generate-a-keyfile)
-    - [Remove your keyfile](#Remove-your-keyfile)
-    - [Check your wallet balance](#Check-your-wallet-balance)
-    - [Send AR to another wallet](#Send-AR-to-another-wallet)
+- [Arweave Deploy](#arweave-deploy)
+  - [Build](#build)
+    - [Build for local Node.js](#build-for-local-nodejs)
+    - [Build portable binaries](#build-portable-binaries)
+  - [Installation](#installation)
+    - [NPM (recommended)](#npm-recommended)
+    - [Manual](#manual)
+  - [Quick Start](#quick-start)
+  - [Usage](#usage)
+    - [Deploy a file](#deploy-a-file)
+    - [Deploy a file with Arweave+IPFS](#deploy-a-file-with-arweaveipfs)
+    - [Deploy a packaged HTML file](#deploy-a-packaged-html-file)
+    - [Check a deployment status](#check-a-deployment-status)
+    - [Load your keyfile](#load-your-keyfile)
+    - [Generate a keyfile](#generate-a-keyfile)
+    - [Remove your keyfile](#remove-your-keyfile)
+    - [Check your wallet balance](#check-your-wallet-balance)
+    - [Send AR to another wallet](#send-ar-to-another-wallet)
+    - [Manually generate and sign a transaction](#manually-generate-and-sign-a-transaction)
 
 ## Build
 
@@ -275,4 +276,38 @@ Wallet
 Address: pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI
 Current balance: 11.095252211832 AR
 Balance after uploading: 0.673038092357 AR
+```
+
+
+### Manually generate and sign a transaction
+
+This function can be used to manually generate and sign a transaction. As all of the transaction fields are user supplied no network connection is required, so this is especially useful for signing transactions on an air gapped machine.
+
+The raw transaction output is only displayed on screen as a JSON object, **it will not submitted to the network even if an internet connection is present**. To submit the transaction you will need to manually post it to the network, this can be as simple as saving the JSON object in a file and using cURL e.g. `curl -X POST -d signed_tx_output.json https://arweave.net/tx`, or using Postman, or some other tool.
+
+All amounts are specified in AR and _not_ Winston.
+
+The `--anchor` parameter is used to anchor the transaction to a point in the blockweave, it must be either the last transaction ID for the sending wallet, or the ID of a recent block (_must_ be within the last 50, we recommend last 25). You can quickly find recent blocks using a block explorer like ViewBlock https://viewblock.io/arweave/blocks.
+
+```
+arweave sign-tx --to=pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI --amount=20.5 --fee=0.25000000123 --anchor=9ADeIc9pNj737SB8P2-3iSiL7vKSaaO8joiNWdAr1FHxB4T1VRe7GwHQaz74prYU
+```
+
+
+```
+Transaction
+
+ID: i3P51MwXmoy0GTptd8aEHMVSsZo0MekuBChKPi98utI
+
+To: pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI
+From: MDlauADgN7AoVQl4Eqmwr3xHXyKXMqADaiCas3mEyNQ
+Amount: 20.500000000000 AR
+Fee: 0.250000001230 AR
+Total: 20.750000001230 AR
+
+Signed Transaction:
+
+{"id":"i3P51MwXmoy0GTptd8aEHMVSsZo0MekuBChKPi98utI","last_tx":"9ADeIc9pNj737SB8P2-3iSiL7vKSaaO8joiNWdAr1FHxB4T1VRe7GwHQaz74prYU","owner":"nFMF-h5inUShL8pOk4o_fJ8UqFFkB36U4T-y5Jq-oOWwMxTEcL9CqaTKmzmSj6e_4cBFjuJkXz-VhW7mOjTK1-DZNjrQdtPNHq1aWsz5BbNWOn_B92h6pqfpsi6ypvoGerZqqwee5r2CSAICJdZnAJ1qn0dz1kZ2IivnTkYz1y_NW7coV141-b--CSPrd6z5cQdXnlm7I3bVPzpbRmtDYAq0PgX1_HJmH1huHWBLYE_NYZgLpykv4s7J6i5Z_Lf9_RWpC45lwufJVQQVUF4r69Fw99GrM6gxvrdPhEvRk__ADWiwKNBRe_3ErYaOqfe4gCV7b8cPGbJ9M6hetONzVSbFdpGli2AWgVqm5jKyZV-dWhZ_EsJeq9MkbunYJN0QvtidXiFCj4tIrPwzYNUq2F1jd2j8UVrUTaQ_R_27JY5CgH7T-vk_elWESSdtnpgDKNsC4M3TFVaDC0jDEBcHmjDTvJTSPvl7hfWPf9pKY8ocJPDLpTdiGwNpFp45R4NAzvmhzuo8McdltECLn0kq8fmzleLy8KgEiggpYYug74fs_ZSLNcjOOK2CoXRk1IUN8euPU8MyBb3WevTXJjHiCJBxhaQ_4P9_fX32JxcBZ7pvJ3FUZt0YSdIgqeg-po3GVBOHip8lONPKbWvdNcWnpviMXAXqkmfljEd6IDtF0o0","tags":[],"target":"pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI","quantity":"20500000000000","data":"","reward":"250000001230","signature":"cQrrMm9miIZZjJ-L6GXRl3OcAp_KUE3K9FI50Rt5Q44OBF-b8_h8keZY9qawDTleIGBuptjXF0A5zAdRbzDLhAOE9YIabB5suPMQd1-8JY0UordLXGpCxUpE416KM7bwKqU9FLrkAk0IbaA6RzMk9BaGqvE7HFFTt0gexeCrmzfC8U1qOcKI_PrED2wtBYC77ioThN37KLEMPXKnC54ruHwYJ7tkn5zyXecjaCTm4zbl7OmBs4iv490ryoTsRlEDgLz4F8bkuR-XY3bvX5T9_5DeCuT_kmpWXAGPE_TrY9FJik1Gija7S-qnKXjB0qznF3g4yXHULDXpRMhILBsM3xmtc_NXmU4Vk1iBSMxQyU0Y3P8Q_WJnAlqA2ENVrmY1R1K6IUTxxcrRv_UnKk34BVONddslCXhLQcJSdMfUZJW43R1vio8C9xuznYz1xyNn4BhT7gWnHEHzKq26YU3yru27cOnKQ0MF2SPVLNc8JeK8rK9ejXLRL89754ruMq7slhRMvkjB-Rzj323bxKp5DXJ_crg84hJMPCV5v8QcKln9q1XjxNvasGn0HActEqU-IxFC3eNDb2sZwf3lhVexVVl5Cni8PhF3AGYJm-vE_Vwh6JR9IP1Lh6SdoafVej9QS5JVfG853b9az71R4OhJzibIlbx6RsRaxf8hTzVeefE"}
+
+This can now be posted to https://arweave.net/tx, or any Arweave node http://0.0.0.0:1984/tx
 ```
