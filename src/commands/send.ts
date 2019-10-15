@@ -25,7 +25,7 @@ export class SendCommand extends Command {
             quantity: winstonAmount
         }, key);
         
-        this.arweave.transactions.sign(transaction, key);
+        await this.arweave.transactions.sign(transaction, key);
 
         const address = await this.arweave.wallets.jwkToAddress(key);
 

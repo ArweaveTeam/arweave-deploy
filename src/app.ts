@@ -4,6 +4,7 @@ import { Command  } from 'commander';
 import { BalanceCommand } from './commands/balance';
 import { DeployCommand } from './commands/deploy';
 import { SendCommand } from './commands/send';
+import { SignTxCommand } from './commands/sign-tx';
 import { NetworkInfoCommand } from './commands/network-info';
 import { StatusCommand } from './commands/status';
 
@@ -34,6 +35,7 @@ const arweave = Arweave.init({
 const commands = [
     new DeployCommand(arweave, cwd, log),
     new SendCommand(arweave, cwd, log),
+    new SignTxCommand(arweave, cwd, log),
     new StatusCommand(arweave, cwd, log),
     new BalanceCommand(arweave, cwd, log),
     new NetworkInfoCommand(arweave, cwd, log),
