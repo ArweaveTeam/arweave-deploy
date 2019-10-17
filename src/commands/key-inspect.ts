@@ -12,13 +12,25 @@ export class KeyInspectCommand extends Command {
 
         const address = await this.arweave.wallets.jwkToAddress(key);
 
-        const lastTx = await this.arweave.wallets.getLastTransactionID(address);
+        let lastTx = ''  
+        let balance = ''  
 
-        const balance = await this.arweave.wallets.getBalance(address);
+        try {
+            lastTx = await this.arweave.wallets.getLastTransactionID(address);
+            
+        } catch (error) {
+            lastTx = `unavailable: ${error.message}`;
+        }
+
+        try {
+            balance = this.formatWinston(await this.arweave.wallets.getBalance(address))
+        } catch (error) {
+            balance = `unavailable: ${error.message}`;
+        }
 
         this.log(JSON.stringify({
             address: address,
-            balance: this.formatWinston(balance),
+            balance: balance,
             last_transaction: lastTx,
         }, null, 4));
 
