@@ -128,6 +128,7 @@ export class DeployDirCommand extends Command {
         );
 
         manifestTx.addTag('Content-Type', 'application/x.arweave-manifest+json');
+        manifestTx.addTag('User-Agent', `ArweaveDeploy/${__VERSION__}`);
 
         await this.arweave.transactions.sign(manifestTx, key);
 
