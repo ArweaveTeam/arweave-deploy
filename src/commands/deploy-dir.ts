@@ -74,6 +74,10 @@ export class DeployDirCommand extends Command {
 
         const assets = await this.getAssets(this.cwd, path);
 
+        if (assets.length > 100) {
+            throw new Error(`A maximum of 50 files per directory is currently supported.`);
+        }
+
         const transactions: Transaction[] = [];
         const pathMap: ManifestPathMap = {};
 
@@ -87,6 +91,11 @@ export class DeployDirCommand extends Command {
         await Promise.all(
             assets.map(async asset => {
                 const data = await asset.file.read();
+
+                if (data.byteLength > 2 * 1024 * 1024) {
+                    throw new Error(`A maximum of 2MB per file is currently supported, ${asset.path} is ${File.bytesForHumans(data.byteLength)}`);
+                }
+
                 const contentType = asset.file.getType();
                 const transaction = await this.arweave.createTransaction(
                     {
@@ -115,6 +124,10 @@ export class DeployDirCommand extends Command {
                 totalSize += data.byteLength;
             }),
         );
+
+        if (totalSize > 10 * 1024 * 1024) {
+            throw new Error(`A total size of 10MB per deployment is currently supported.`);
+        }
 
         const manifest = await generateManifest(pathMap, indexPath);
         const manifestData = Buffer.from(JSON.stringify(manifest), 'utf8');

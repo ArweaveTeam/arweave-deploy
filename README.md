@@ -1,23 +1,24 @@
 # Arweave Deploy
 
-- [Arweave Deploy](#Arweave-Deploy)
-  - [Build](#Build)
-    - [Build for local Node.js](#Build-for-local-Nodejs)
-    - [Build portable binaries](#Build-portable-binaries)
-  - [Installation](#Installation)
-    - [NPM (recommended)](#NPM-recommended)
-    - [Manual](#Manual)
-  - [Quick Start](#Quick-Start)
-  - [Usage](#Usage)
-    - [Deploy a file](#Deploy-a-file)
-    - [Deploy a file with Arweave+IPFS](#Deploy-a-file-with-ArweaveIPFS)
-    - [Deploy a packaged HTML file](#Deploy-a-packaged-HTML-file)
-    - [Check a deployment status](#Check-a-deployment-status)
-    - [Load your keyfile](#Load-your-keyfile)
-    - [Generate a keyfile](#Generate-a-keyfile)
-    - [Remove your keyfile](#Remove-your-keyfile)
-    - [Check your wallet balance](#Check-your-wallet-balance)
-    - [Send AR to another wallet](#Send-AR-to-another-wallet)
+- [Arweave Deploy](#arweave-deploy)
+  - [Build](#build)
+    - [Build for local Node.js](#build-for-local-nodejs)
+    - [Build portable binaries](#build-portable-binaries)
+  - [Installation](#installation)
+    - [NPM (recommended)](#npm-recommended)
+    - [Manual](#manual)
+  - [Quick Start](#quick-start)
+  - [Usage](#usage)
+    - [Deploy a file](#deploy-a-file)
+    - [Deploy a file with Arweave+IPFS](#deploy-a-file-with-arweaveipfs)
+    - [Deploy a packaged HTML file](#deploy-a-packaged-html-file)
+    - [Deploy a directory](#deploy-a-directory)
+    - [Check a deployment status](#check-a-deployment-status)
+    - [Load your keyfile](#load-your-keyfile)
+    - [Generate a keyfile](#generate-a-keyfile)
+    - [Remove your keyfile](#remove-your-keyfile)
+    - [Check your wallet balance](#check-your-wallet-balance)
+    - [Send AR to another wallet](#send-ar-to-another-wallet)
 
 ## Build
 
@@ -105,7 +106,7 @@ arweave deploy path-to-my/index.html --package
 
 ### Deploy a file
 
-If you're deploying HTML pages and have have external resources referenced, like style sheets, JavaScript, or images, then use the [packaged HTML](#deploy-a-packaged-html-file) workflow.
+If you're deploying HTML pages and have have external resources referenced, like style sheets, JavaScript, or images, then use the [deploy a directory](#deploy-a-directory) workflow.
 
 ```
 arweave deploy path-to-my/file.html
@@ -159,6 +160,58 @@ For you can use the package command to process the file without deploying it, th
 
 ```
 arweave package path-to/index.html output/packaged.html
+```
+
+### Deploy a directory
+
+Deploy a directory with a [path manifest](https://github.com/ArweaveTeam/arweave/wiki/Path-Manifests). This is the recommended method for deploying an Arweave application, as each asset will be uploaded independently so there is no need for packaging and asset inlining.
+
+```
+arweave deploy-dir path-to/directory/to-deploy
+```
+
+```
+Preparing files from /Users/test/path-to/directory/to-deploy
+
+ID                                          Size         Fee             Type                 Path
+B65fe71tENkmgmndJQTvLZqVqg4lUsdcmCFudw_uzBk 4.59 kB      0.000019762690  image/png            favicon/source.png
+RBg1ysAnKmlnU8YROY2g2KVbE3d6rgobVV4qzss2Isk 3.55 kB      0.000017101174  image/png            images/logo-node.png
+648-XB1Tf2KDPJUyzMf1Zf1FmWi0F103WMtZydQvhZ8 18.89 kB     0.000056359156  text/html            open-web-hackathon.html
+Kws1-Lr-z4tTGzrqfJQv9Biko_lrBPAr90H2xW_oXtg 22.24 kB     0.000064933485  text/html            technology.html
+w243l_eiYxwS_JPotydO2VVi1uCpYga1CZjWAHuahDU 24.78 kB     0.000071428584  image/svg+xml        images/8.svg
+9HG223hRM46RczvRidgxj1tF5GtoTprL2ItGKXew9Ac 32.27 kB     0.000090591496  image/svg+xml        images/7.svg
+J1CgVMmA0P7YxxynjuWW3J6e5S-Qp6O9Smu8I0nCGSA 22.65 kB     0.000065978098  text/html            hosting.html
+aUJYq1gUTOenMHwlkQWj3YNSiul5O8j0G8lWXlHdx7I 22.79 kB     0.000066350461  image/svg+xml        images/hosting-1.svg
+boN6C7ntD_yi-IGbkBqc0KXr0fz7SGoFLSZ2OKxJYRE 49.53 kB     0.000134780154  text/css             player/player.css
+Eaa4CWHk1KD5QhHAUAjW5zV30391P60mhpHWcMgPGBU 36.59 kB     0.000101662402  text/html            index.html*
+
+kFoajp8jQ1NUS7Rc7AaxwIMXViAdOYPfNQZjZkMlPEU 6.04 kB      0.000023471318  application/x.arweave-manifest+json
+
+Summary
+
+Index: index.html
+Number of files: 78 + 1 manifest
+Total size: 7.91 MB
+Total price: 0.021388749854 AR
+
+Wallet
+
+Address: MDlauADgN7AoVQl4Eqmwr3xHXyKXMqADaiCas3mEyNQ
+Current balance: 48.855183859428 AR
+Balance after uploading: 48.833795109574 AR
+
+Carefully check the above details are correct, then Type CONFIRM to complete this upload 
+```
+
+```
+Uploading...
+
+████████████████████████████████████████ 79/79 100% | 1m49s
+
+Your files are being deployed! 🚀
+Once your files are mined into blocks they'll be available on the following URL
+
+https://arweave.net/kFoajp8jQ1NUS7Rc7AaxwIMXViAdOYPfNQZjZkMlPEU
 ```
 
 ### Check a deployment status
