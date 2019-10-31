@@ -103,13 +103,18 @@ export async function parseData(file: File, options: PrepareTransactionOptions):
 }
 
 async function newTransaction(arweave: Arweave, key: JWKInterface, data: Buffer ): Promise<Transaction> {
+    const anchor = (await arweave.api.get('tx_anchor')).data;
+
     return arweave.createTransaction({
+        last_tx: anchor,
         data: data
     }, key);
 }
 
 async function newSiloTransaction(arweave: Arweave, key: JWKInterface, data: Buffer, siloURI: string): Promise<Transaction> {
+    const anchor = (await arweave.api.get('tx_anchor')).data;
     return arweave.createSiloTransaction({
+        last_tx: anchor,
         data: data,
     }, key, siloURI);
 

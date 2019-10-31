@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { BalanceCommand } from './commands/balance';
 import { DeployCommand } from './commands/deploy';
+import { DeployDirCommand } from './commands/deploy-dir';
 import { SendCommand } from './commands/send';
 import { NetworkInfoCommand } from './commands/network-info';
 import { StatusCommand } from './commands/status';
@@ -14,7 +15,6 @@ import { KeySaveCommand } from './commands/key-save';
 import { KeyExportCommand } from './commands/key-export';
 import { KeyInspectCommand } from './commands/key-inspect';
 import { PackageCommand } from './commands/package';
-import { ServeCommand } from './commands/serve';
 
 declare var __VERSION__: string;
 
@@ -33,7 +33,7 @@ const arweave = Arweave.init({
 
 const commands = [
     new DeployCommand(arweave, cwd, log),
-    new ServeCommand(arweave, cwd, log),
+    new DeployDirCommand(arweave, cwd, log),
     new SendCommand(arweave, cwd, log),
     new StatusCommand(arweave, cwd, log),
     new BalanceCommand(arweave, cwd, log),
