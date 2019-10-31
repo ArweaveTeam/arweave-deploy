@@ -61,6 +61,8 @@ function uploadProgressBar(): Bar {
         {
             etaBuffer: 100,
             fps: 30,
+            //@ts-ignore
+            // The types for this library aren't up to date
             format: (options: any, params: any, payload: any) => {
                 const percentage = Math.round(params.progress * 100) + '';
                 // calculate elapsed time
