@@ -287,7 +287,7 @@ The raw transaction output is only displayed on screen as a JSON object, **it wi
 
 All amounts are specified in AR and _not_ Winston.
 
-The `--anchor` parameter is used to anchor the transaction to a point in the blockweave, it must be either the last transaction ID for the sending wallet, or the ID of a recent block (_must_ be within the last 50, we recommend last 25). You can quickly find recent blocks using a block explorer like ViewBlock https://viewblock.io/arweave/blocks.
+The `--anchor` parameter is used to anchor the transaction to a point in the blockweave, it must be either the last transaction ID for the sending wallet, or the ID of a recent block (_must_ be within the last 50, we recommend last 25). You can quickly find a recent block anchor value using https://arweave.net/tx_anchor
 
 ```
 arweave sign-tx --key-file=path/to/arweave-key.json --to=pEbU_SLfRzEseum0_hMB1Ie-hqvpeHWypRhZiPoioDI --amount=20.5 --fee=0.25000000123 --anchor=9ADeIc9pNj737SB8P2-3iSiL7vKSaaO8joiNWdAr1FHxB4T1VRe7GwHQaz74prYU
