@@ -80,10 +80,6 @@ export async function parseData(file: File, options: PrepareTransactionOptions):
     // whatever reason, or the user wants to set another value.
     const contentType = (options.contentType || mime.getType(file.getPath())) || 'application/octet-stream';
 
-    if ((process.env.awd_filter_types !== '0') && !contentType.match('^(text/.*|application/pdf)$')) {
-        throw new Error(`Detected content type: ${contentType}\nBETA NOTICE: text/* content types are currently supported, more content types will be supported in future releases.`);
-    }
-
     // We need to read/parse the data before doing anything else as this will
     // change the data size, invalidate signatures etc.
 
@@ -92,7 +88,7 @@ export async function parseData(file: File, options: PrepareTransactionOptions):
     const data = await parser.run(file, options);
 
     if (data.byteLength >= 2 * 1024 * 1024) {
-        throw new Error(`Detected byte size: ${File.bytesForHumans(data.byteLength)}\nBETA NOTICE: Data uploads are currently limited to 2MB per transaction.`);
+        throw new Error(`Detected byte size: ${File.bytesForHumans(data.byteLength)}\nData uploads are currently limited to 10MB per transaction.`);
     }
 
     return {

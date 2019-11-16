@@ -92,8 +92,8 @@ export class DeployDirCommand extends Command {
             assets.map(async asset => {
                 const data = await asset.file.read();
 
-                if (data.byteLength > 2 * 1024 * 1024) {
-                    throw new Error(`A maximum of 2MB per file is currently supported, ${asset.path} is ${File.bytesForHumans(data.byteLength)}`);
+                if (data.byteLength > 10 * 1024 * 1024) {
+                    throw new Error(`A maximum of 10MB per file is currently supported, ${asset.path} is ${File.bytesForHumans(data.byteLength)}`);
                 }
 
                 const contentType = asset.file.getType();

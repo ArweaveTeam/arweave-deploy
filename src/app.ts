@@ -49,7 +49,7 @@ const commands = [
 const cli = new Command();
 
 cli.option('-v --version', 'Show the version number', (): void => {
-    log(__VERSION__ + ' (BETA)');
+    log(__VERSION__);
     quit(0);
 });
 
