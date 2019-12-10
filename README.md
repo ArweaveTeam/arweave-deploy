@@ -19,6 +19,8 @@
     - [Check your wallet balance](#check-your-wallet-balance)
     - [Send AR to another wallet](#send-ar-to-another-wallet)
     - [Manually generate and sign a transaction](#manually-generate-and-sign-a-transaction)
+    - [Sign a message](#sign-a-message)
+    - [Verify a signed message](#verify-a-signed-message)
 
 ## Build
 
@@ -311,3 +313,47 @@ Signed Transaction:
 
 This can now be posted to https://arweave.net/tx, or any Arweave node http://0.0.0.0:1984/tx
 ```
+
+### Sign a message
+
+This command can sign an arbitrary UTF-8 string message, using your Arweave private key. See the [verify command](#verify-a-signed-message) for verifying signatures.
+
+```
+arweave message-sign --message="my-test-message" --key-file="keys/MDlauADgN7AoVQl4Eqmwr3xHXyKXMqADaiCas3mEyNQ.json"
+```
+
+```
+Arweave address: MDlauADgN7AoVQl4Eqmwr3xHXyKXMqADaiCas3mEyNQ
+
+Message: my-test-message
+
+Public key: nFMF-h5inUShL8pOk4o_fJ8UqFFkB36U4T-y5Jq-oOWwMxTEcL9CqaTKmzmSj6e_4cBFjuJkXz-VhW7mOjTK1-DZNjrQdtPNHq1aWsz5BbNWOn_B92h6pqfpsi6ypvoGerZqqwee5r2CSAICJdZnAJ1qn0dz1kZ2IivnTkYz1y_NW7coV141-b--CSPrd6z5cQdXnlm7I3bVPzpbRmtDYAq0PgX1_HJmH1huHWBLYE_NYZgLpykv4s7J6i5Z_Lf9_RWpC45lwufJVQQVUF4r69Fw99GrM6gxvrdPhEvRk__ADWiwKNBRe_3ErYaOqfe4gCV7b8cPGbJ9M6hetONzVSbFdpGli2AWgVqm5jKyZV-dWhZ_EsJeq9MkbunYJN0QvtidXiFCj4tIrPwzYNUq2F1jd2j8UVrUTaQ_R_27JY5CgH7T-vk_elWESSdtnpgDKNsC4M3TFVaDC0jDEBcHmjDTvJTSPvl7hfWPf9pKY8ocJPDLpTdiGwNpFp45R4NAzvmhzuo8McdltECLn0kq8fmzleLy8KgEiggpYYug74fs_ZSLNcjOOK2CoXRk1IUN8euPU8MyBb3WevTXJjHiCJBxhaQ_4P9_fX32JxcBZ7pvJ3FUZt0YSdIgqeg-po3GVBOHip8lONPKbWvdNcWnpviMXAXqkmfljEd6IDtF0o0
+
+Signature: BRySjfhEdL3mf00x_t-edXPP08uyMzZ_XC-Hp_G6mrqqqZPSHgjURpK04eNHSxb7iT0ooQYPZ1-coqe0H8ecncQ029hUY6zmkJzsFRZ7oW0X2mNGjX-xUF-w1ynRy0mlNcCzrURyI2YjvIJlVBq-TYYsj6URAkbnoZDYddlOpLXMR8favqwXPeOL0j2zA8Fgu3fY_BsanzxNwvdN5fHrlcbg2hrkO7iKrr6LRqbeNn-SwLKIWridXvSEEJ1xk4JOLPWmGRUqxZdTq3DIz_CzIdNf7Plb-5hoG5EZr2Wyy0tL5YWWsFNjtgLMqooUk1P_36RDCuLEZioSOEIPFxQvvPFkEuqQ1aUr_FdUa1JuraGUsEMm3g0JIowdkTfYeXfukIuVNkYElKFA5WH-vYUTFlNUyNzjCoEjEotayrYsA1ZhmDtGbtYAfyk2ky2zG--Sdf4HjFWPf-HYVN65N_DU9UQpMmv20UoIkXVRxp_vvO0cleZTTeFW7-riGUePvHjlCiG6O7UQ3wRMRGxrP30NxEO01_jD3G2X2fjV7yBNk_DmiZZZ-D2-KodshxdgC4tPzERA1EyqnBoenSLNZYntYVdrJq5gvwP_S-N_cCWaEPuV4sG3Sb-tVN-KhrG2V-lFBUhrChfwYg9uVPoVTS86Kup58lqnbDX4J__Pwm3ZNug
+```
+
+### Verify a signed message
+
+This command can verify the signature for an arbitrary UTF-8 string message signed using an Arweave private key. The parameter values can be filled using the output from the [message signing](#sign-a-message) command.
+```
+arweave message-verify \
+--address="MDlauADgN7AoVQl4Eqmwr3xHXyKXMqADaiCas3mEyNQ" \
+--message="my-test-message" \
+--public-key="nFMF-h5inUShL8..." \
+--signature="BRySjfhEdL3mf00x_t-edXPP08uyMzZ_XC-Hp_G6mrqqqZ..."
+```
+```
+Signature verification passed
+```
+
+**Errors**
+
+* `Signature verification failed: the signature is not valid for the given inputs`
+
+  The signature is not valid. Either the message or signature values may have been copied incorrectly, or modified since the signature was generated.
+
+
+* `Signature verification failed: public key does not match the given Arweave address`
+
+  The `--public-key` does not correspond to the supplied Arweave address, given by `--address` . Arweave addresses are SHA-256 hashes of the raw RSA public key.
+
