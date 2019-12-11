@@ -37,11 +37,11 @@ export class MessageVerifyCommand extends Command {
     this.validateParamIsSet("address");
     this.validateParamIsSet("publicKey", "--public-key");
 
-    const derrivedAddress = Utils.bufferTob64Url(
+    const derivedAddress = Utils.bufferTob64Url(
       await this.arweave.crypto.hash(Utils.b64UrlToBuffer(publicKey))
     );
 
-    if (address !== derrivedAddress) {
+    if (address !== derivedAddress) {
       throw new Error(
         "Signature verification failed: public key does not match the given Arweave address"
       );
