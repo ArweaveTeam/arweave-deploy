@@ -76,7 +76,7 @@ export class SendCommand extends Command {
             ``,
             `Block explorer link:`,
             ``,
-            chalk.cyanBright(`https://viewblock.io/${transaction.id}`),
+            chalk.cyanBright(`https://viewblock.io/arweave/tx/${transaction.id}`),
             ``,
             `Your transaction can take a few minutes to propagate across the network.`,
         ]);
