@@ -87,6 +87,7 @@ export async function parseData(file: File, options: PrepareTransactionOptions):
 
     const data = await parser.run(file, options);
 
+
     if (data.byteLength > 10 * 1024 * 1024) {
         throw new Error(`Detected byte size: ${File.bytesForHumans(data.byteLength)}\nData uploads are currently limited to 10MB per transaction.`);
     }
