@@ -125,7 +125,7 @@ export class DeployDirCommand extends Command {
             }),
         );
 
-        if (totalSize > 10 * 1024 * 1024) {
+        if (totalSize > 20 * 1024 * 1024) {
             throw new Error(`A total size of 10MB per deployment is currently supported.`);
         }
 
