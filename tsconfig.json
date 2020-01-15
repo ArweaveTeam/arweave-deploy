@@ -8,6 +8,7 @@
         "allowJs": true,
         "moduleResolution": "node",
         "rootDir": "src",
+        "esModuleInterop": true
     },
     "include": [
         "src"

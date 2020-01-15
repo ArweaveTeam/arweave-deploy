@@ -2,7 +2,7 @@
 import * as dagPB from 'ipld-dag-pb';
 
 //@ts-ignore
-import * as UnixFS from 'ipfs-unixfs';
+import UnixFS from 'ipfs-unixfs';
 
 export async function getIpfsCid(data: Buffer, unixFsType = 'file', dagPbOptions = {cidVersion: 0}): Promise<string>{
     const file = new UnixFS(unixFsType, data);
