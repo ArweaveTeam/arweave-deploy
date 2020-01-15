@@ -24,7 +24,7 @@ module.exports = class Compiler {
                     output: path.resolve(__dirname, './dist/macos/arweave'),
                     build: false,
                     targets: [
-                        { version: '10.15.0', platform: 'macos', arch: 'x64' },
+                        { version: '12.14.1', platform: 'macos', arch: 'x64' },
                     ]
                 }));
 
@@ -33,7 +33,7 @@ module.exports = class Compiler {
                     output: path.resolve(__dirname, './dist/linux/arweave'),
                     build: false,
                     targets: [
-                        { version: '10.15.0', platform: 'linux', arch: 'x64' },
+                        { version: '12.14.1', platform: 'linux', arch: 'x64' },
                     ]
                 }));
 
@@ -42,7 +42,7 @@ module.exports = class Compiler {
                     output: path.resolve(__dirname, './dist/windows/arweave-x64.exe'),
                     build: false,
                     targets: [
-                        { version: '10.15.0', platform: 'windows', arch: 'x64' },
+                        { version: '12.14.1', platform: 'windows', arch: 'x64' },
                     ]
                 }));
 
@@ -51,7 +51,7 @@ module.exports = class Compiler {
                     output: path.resolve(__dirname, './dist/windows/arweave-x86.exe'),
                     build: false,
                     targets: [
-                        { version: '10.15.0', platform: 'windows', arch: 'x86' },
+                        { version: '12.14.1', platform: 'windows', arch: 'x86' },
                     ]
                 }));
 
