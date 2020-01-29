@@ -1,6 +1,6 @@
 import Transaction from 'arweave/node/lib/transaction';
 import { sync as globSync } from 'glob';
-import { join, resolve } from 'path';
+import { join, resolve, isAbsolute } from 'path';
 import { Command } from '../command';
 import { File } from '../lib/file';
 import chalk from 'chalk';
@@ -51,7 +51,7 @@ export class DeployDirCommand extends Command {
         }
 
         const resolvedBasePath =
-            basePath.startsWith('~') || basePath.startsWith('/') ? resolve(basePath) : join(cwd, basePath);
+            basePath.startsWith('~') || isAbsolute(basePath) ? resolve(basePath) : join(cwd, basePath);
 
         const paths = globSync('**/*', { cwd: resolvedBasePath, nodir: true });
 
