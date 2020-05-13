@@ -74,8 +74,8 @@ export class DeployDirCommand extends Command {
 
         const assets = await this.getAssets(this.cwd, path);
 
-        if (assets.length > 100) {
-          throw new Error(`A maximum of 100 files per directory is currently supported.`);
+        if (assets.length > 200) {
+            throw new Error(`A maximum of 100 files per directory is currently supported.`);
         }
 
         const transactions: Transaction[] = [];
@@ -125,8 +125,8 @@ export class DeployDirCommand extends Command {
             }),
         );
 
-        if (totalSize > 20 * 1024 * 1024) {
-            throw new Error(`A total size of 10MB per deployment is currently supported.`);
+        if (totalSize > 35 * 1024 * 1024) {
+            throw new Error(`A total size of 35MB per deployment is currently supported.`);
         }
 
         const manifest = await generateManifest(pathMap, indexPath);
