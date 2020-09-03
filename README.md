@@ -58,7 +58,7 @@ npm install -g arweave-deploy
 npm update -g arweave-deploy
 ```
 
-RSA key generation requires Node v10.12.0 so some features may be unavailable. If you're running an earlier versoin of node or don't want node installed at all, the precompiled binaries below come bundled with the correct version.
+RSA key generation requires Node v10.12.0 so some features may be unavailable. If you're running an earlier version of node or don't want node installed at all, the precompiled binaries below come bundled with the correct version.
 
 ### Manual
 
