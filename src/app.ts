@@ -158,7 +158,7 @@ cli.on('--help', function() {
     log('Examples:');
     log('  Without a saved key file');
     log('    arweave deploy index.html --key-file path/to/my/keyfile.json');
-    log('    arweave save-key --key-file path/to/my/keyfile.json');
+    log('    arweave key-save --key-file path/to/my/keyfile.json');
     log('    arweave balance --key-file path/to/my/keyfile.json');
     log('  With a saved key file');
     log('    arweave deploy index.html');
