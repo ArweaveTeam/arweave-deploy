@@ -1,5 +1,7 @@
 # Arweave Deploy
 
+## [UNMAINTAINED] *This tool is unmaintained, and has been replaced by [arkb](https://github.com/textury/arkb/blob/master/README.md)*
+
 - [Arweave Deploy](#arweave-deploy)
   - [Build](#build)
     - [Build for local Node.js](#build-for-local-nodejs)
