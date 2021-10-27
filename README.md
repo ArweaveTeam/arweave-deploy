@@ -260,7 +260,7 @@ Arweave is a blockchain-like network, so each data upload (transaction) needs si
 
 **I don't have an Arweave key file or tokens?**
 
-If you don't have any Arweave tokens [you can get 1 AR free to try this out](https://tokens.arweave.org).
+If you don't have any Arweave tokens [you can get .1 AR free to try this out] (https://tokens.arweave.org).
 
 **I already have an Arweave wallet, how do I get the keyfile?**
 
