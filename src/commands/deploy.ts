@@ -23,7 +23,7 @@ export class DeployCommand extends Command {
 
     public options = [
           {
-            signature: '--tag <key>:<value>',
+            signature: '--tag <key>:<value>  [Use quotation marks if value has spaces]',
             description: 'Add a tag',
             action: (value: string, collection: UserTag[] = []): UserTag[] => {
                 // Tags are passed as key:value strings
